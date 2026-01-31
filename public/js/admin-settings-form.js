@@ -224,6 +224,8 @@ async function saveField() {
 
         if (result.error) throw result.error;
 
+        await logActivity('SAVE_FORM_FIELD', `Menyimpan pertanyaan formulir: ${label}`);
+
         Swal.fire('Berhasil', 'Pertanyaan berhasil disimpan.', 'success');
         closeFieldModal();
         loadFields();
@@ -247,6 +249,9 @@ async function deleteField(id) {
         try {
             const { error } = await supabaseClient.from('form_fields').delete().eq('id', id);
             if (error) throw error;
+
+            await logActivity('DELETE_FORM_FIELD', `Menghapus pertanyaan formulir ID: ${id}`);
+
             loadFields();
         } catch (err) {
             Swal.fire('Error', err.message, 'error');

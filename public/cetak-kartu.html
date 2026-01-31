@@ -54,14 +54,27 @@
             }
 
             try {
-                // Fetch data
-                const { data, error } = await supabaseClient
-                    .from('pendaftaran')
-                    .select('*')
-                    .eq('id', id)
-                    .single();
+                // Fetch data & Settings
+                const [studentRes, settingsRes] = await Promise.all([
+                    supabaseClient.from('pendaftaran').select('*').eq('id', id).single(),
+                    supabaseClient.from('app_settings').select('value').eq('key', 'school_profile').single()
+                ]);
 
-                if (error) throw error;
+                if (studentRes.error) throw studentRes.error;
+                const data = studentRes.data;
+
+                // Parse Settings
+                let school = {
+                    nama_sekolah: 'SD INPRES LELINGLUAN',
+                    alamat: 'Jl. Contoh No. 123, Desa Lelingluan, Kec. Tanimbar Utara',
+                    kepala_sekolah: 'Admin Sekolah',
+                    logo_url: ''
+                };
+
+                if (settingsRes.data && settingsRes.data.value) {
+                    const saved = typeof settingsRes.data.value === 'string' ? JSON.parse(settingsRes.data.value) : settingsRes.data.value;
+                    school = { ...school, ...saved };
+                }
 
                 // Get Photo URL
                 let fotoUrl = 'https://via.placeholder.com/150';
@@ -75,15 +88,21 @@
                 const regDate = new Date(data.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
                 const container = document.getElementById('card-container');
+
+                // Logo Handling
+                const logoImg = school.logo_url
+                    ? `<img src="${school.logo_url}" class="w-20 h-20 object-contain">`
+                    : `<div class="w-20 h-20 bg-blue-900 text-white flex items-center justify-center font-bold text-2xl rounded-full">SD</div>`;
+
                 container.innerHTML = `
                     <div class="border-4 border-double border-slate-800 p-8 relative">
                         <!-- Header -->
                         <div class="flex items-center justify-between border-b-2 border-slate-800 pb-4 mb-6">
-                            <div class="w-20 h-20 bg-blue-900 text-white flex items-center justify-center font-bold text-2xl rounded-full">SD</div>
+                            ${logoImg}
                             <div class="text-center flex-1 px-4">
                                 <h1 class="text-2xl font-bold uppercase tracking-wider mb-1">Panitia Penerimaan Peserta Didik Baru</h1>
-                                <h2 class="text-xl font-bold text-blue-900">SD INPRES LELINGLUAN</h2>
-                                <p class="text-sm text-slate-600">Jl. Contoh No. 123, Desa Lelingluan, Kec. Tanimbar Utara</p>
+                                <h2 class="text-xl font-bold text-blue-900 uppercase">${school.nama_sekolah}</h2>
+                                <p class="text-sm text-slate-600">${school.alamat}</p>
                             </div>
                             <div class="w-20"></div>
                         </div>
@@ -136,8 +155,8 @@
                             </div>
                             <div class="text-center w-64">
                                 <p class="text-sm mb-2">Lelingluan, ${date}</p>
-                                <p class="text-sm mb-12">Panitia PPDB,</p>
-                                <p class="font-bold border-b border-slate-400 inline-block px-4">Admin Sekolah</p>
+                                <p class="text-sm mb-12">Kepala Sekolah,</p>
+                                <p class="font-bold border-b border-slate-400 inline-block px-4">${school.kepala_sekolah}</p>
                             </div>
                         </div>
 

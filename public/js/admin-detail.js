@@ -240,6 +240,8 @@ async function saveEdit() {
         // Update local data
         currentData = { ...currentData, ...updates };
 
+        await logActivity('UPDATE_STUDENT', `Mengubah data siswa ID: ${studentId}`);
+
         Swal.fire('Berhasil', 'Data berhasil diperbarui.', 'success');
         isEditMode = false;
         updateUIState();
@@ -262,6 +264,9 @@ async function updateStatus(newStatus) {
 
         currentData.status = newStatus;
         document.getElementById('status-display').innerText = newStatus;
+
+        await logActivity('UPDATE_STATUS', `Mengubah status siswa ID ${studentId} menjadi ${newStatus}`);
+
         Swal.fire('Berhasil', `Status diubah menjadi ${newStatus}`, 'success');
 
     } catch (error) {

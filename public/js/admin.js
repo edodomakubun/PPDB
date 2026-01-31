@@ -307,6 +307,8 @@ async function deleteData(id) {
             const { error } = await supabaseClient.from('pendaftaran').delete().eq('id', id);
             if (error) throw error;
 
+            await logActivity('DELETE_STUDENT', `Menghapus data siswa: ${item.nama_lengkap} (NIK: ${item.nik})`);
+
             Swal.fire('Terhapus!', 'Data berhasil dihapus.', 'success');
 
             // Reload data to update tables and charts
@@ -370,4 +372,48 @@ function exportToPDF() {
     });
 
     doc.save(`Laporan_PPDB_${new Date().toISOString().split('T')[0]}.pdf`);
+}
+
+async function exportToJSON() {
+    try {
+        Swal.fire({ title: 'Menyiapkan Backup...', didOpen: () => Swal.showLoading() });
+
+        // Fetch All Data Tables
+        const [pendaftaran, settings, fields, logs, announcements] = await Promise.all([
+            supabaseClient.from('pendaftaran').select('*'),
+            supabaseClient.from('app_settings').select('*'),
+            supabaseClient.from('form_fields').select('*'),
+            supabaseClient.from('audit_logs').select('*'),
+            supabaseClient.from('announcements').select('*')
+        ]);
+
+        const backupData = {
+            timestamp: new Date().toISOString(),
+            pendaftaran: pendaftaran.data || [],
+            app_settings: settings.data || [],
+            form_fields: fields.data || [],
+            audit_logs: logs.data || [],
+            announcements: announcements.data || []
+        };
+
+        const jsonStr = JSON.stringify(backupData, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `BACKUP_SPMB_${new Date().toISOString().replace(/:/g, '-')}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        await logActivity('BACKUP_DATA', 'Melakukan backup database (JSON Export)');
+
+        Swal.close();
+
+    } catch (err) {
+        console.error(err);
+        Swal.fire('Error', 'Gagal membuat backup: ' + err.message, 'error');
+    }
 }

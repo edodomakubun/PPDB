@@ -140,6 +140,8 @@
 
                 if (error) throw error;
 
+                await logActivity('UPDATE_SETTINGS', 'Memperbarui konfigurasi website sekolah');
+
                 Swal.fire('Berhasil', 'Pengaturan berhasil disimpan.', 'success');
 
             } catch (err) {

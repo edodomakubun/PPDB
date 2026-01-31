@@ -83,6 +83,8 @@ async function deleteUser(id) {
 
             if (error) throw error;
 
+            await logActivity('DELETE_USER', `Menghapus profil panitia ID: ${id}`);
+
             Swal.fire('Terhapus', 'Profil dihapus.', 'success');
             loadUsers();
         } catch (err) {

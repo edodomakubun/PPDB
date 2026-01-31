@@ -162,6 +162,50 @@ END $$;
 
 
 -- ==========================================
+-- FEATURE TABLES: ANNOUNCEMENTS & AUDIT LOGS
+-- ==========================================
+
+-- 4. Announcements
+CREATE TABLE IF NOT EXISTS public.announcements (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    is_published BOOLEAN DEFAULT true
+);
+
+ALTER TABLE public.announcements ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Enable read for public announcements" ON public.announcements;
+DROP POLICY IF EXISTS "Enable full access for admin announcements" ON public.announcements;
+
+CREATE POLICY "Enable read for public announcements"
+ON public.announcements FOR SELECT TO anon USING (is_published = true);
+
+CREATE POLICY "Enable full access for admin announcements"
+ON public.announcements FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+
+-- 5. Audit Logs
+CREATE TABLE IF NOT EXISTS public.audit_logs (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    admin_email TEXT NOT NULL,
+    action TEXT NOT NULL,
+    details TEXT,
+    ip_address TEXT
+);
+
+ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Enable full access for admin audit_logs" ON public.audit_logs;
+
+-- Only Admins can insert/view logs. No public access.
+CREATE POLICY "Enable full access for admin audit_logs"
+ON public.audit_logs FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+
+-- ==========================================
 -- STORAGE SETUP
 -- ==========================================
 -- Insert bucket 'berkas_siswa' (Safe if exists)
