@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Konfigurasi Formulir Pendaftaran - SD INPRES LELINGLUAN</title>
+    <!-- Tailwind CSS v4 -->
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- SortableJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .drag-handle { cursor: move; }
+        .ghost-class { opacity: 0.5; background: #f0f9ff; border: 2px dashed #3b82f6; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased">
+
+    <!-- Navbar -->
+    <nav class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">SD</div>
+                    <span class="font-bold text-lg text-slate-900">Panel Panitia</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span id="user-email" class="text-sm text-slate-500 hidden sm:block"></span>
+                    <a href="dashboard.html" class="text-sm font-medium text-slate-600 hover:text-blue-600 transition">Dashboard</a>
+                    <button id="btn-logout" class="text-sm font-medium text-red-600 hover:text-red-700 transition">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <a href="dashboard.html" class="text-slate-500 hover:text-blue-600 text-sm mb-2 inline-flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    Kembali ke Dashboard
+                </a>
+                <h1 class="text-2xl font-bold text-slate-900">Konfigurasi Formulir</h1>
+                <p class="text-slate-500">Atur pertanyaan dan tampilan formulir pendaftaran.</p>
+            </div>
+            <button onclick="openFieldModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-sm flex items-center gap-2 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Tambah Pertanyaan
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+            <!-- Editor Column -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden h-fit">
+                <div class="p-4 bg-slate-50 border-b border-slate-200 font-bold text-slate-700 flex justify-between items-center">
+                    <span>Editor Formulir (Drag & Drop)</span>
+                    <button onclick="saveOrder()" id="btn-save-order" class="hidden text-xs bg-green-100 text-green-700 px-2 py-1 rounded border border-green-200 hover:bg-green-200">Simpan Urutan</button>
+                </div>
+                <div id="field-list" class="divide-y divide-slate-100 max-h-[600px] overflow-y-auto">
+                    <!-- Fields Rendered JS -->
+                    <div class="p-8 text-center text-slate-400">Memuat data fields...</div>
+                </div>
+            </div>
+
+            <!-- Preview Column -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden sticky top-24 h-fit">
+                <div class="p-4 bg-slate-50 border-b border-slate-200 font-bold text-slate-700">
+                    Preview Tampilan (Live)
+                </div>
+                <div class="p-6 bg-white max-h-[600px] overflow-y-auto">
+                    <div class="space-y-6" id="preview-container">
+                        <!-- Live Preview Rendered JS -->
+                        <div class="skeleton h-10 w-full bg-slate-100 rounded"></div>
+                        <div class="skeleton h-10 w-2/3 bg-slate-100 rounded"></div>
+                        <div class="skeleton h-32 w-full bg-slate-100 rounded"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modal Add/Edit Field -->
+    <div id="modal-field" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-slate-500 bg-opacity-75 transition-opacity" onclick="closeFieldModal()"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <h3 class="text-lg leading-6 font-bold text-slate-900 mb-4" id="modal-title">Tambah Pertanyaan</h3>
+                    <form id="form-field" class="space-y-4">
+                        <input type="hidden" id="field-id">
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Label Pertanyaan</label>
+                            <input type="text" id="field-label" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Tipe Input</label>
+                                <select id="field-type" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white">
+                                    <option value="text">Teks Singkat</option>
+                                    <option value="number">Angka</option>
+                                    <option value="textarea">Paragraf Panjang</option>
+                                    <option value="date">Tanggal</option>
+                                    <option value="select">Pilihan (Dropdown)</option>
+                                    <option value="file">Upload File</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Bagian (Section)</label>
+                                <select id="field-section" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white">
+                                    <option value="identity">Data Pribadi</option>
+                                    <option value="parents">Data Orang Tua</option>
+                                    <option value="files">Berkas Lampiran</option>
+                                    <option value="custom">Tambahan</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div id="options-container" class="hidden">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Pilihan Opsi (Pisahkan dengan koma)</label>
+                            <input type="text" id="field-options" placeholder="Contoh: Laki-laki,Perempuan" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                        </div>
+
+                        <div class="flex items-center">
+                            <input type="checkbox" id="field-required" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <label for="field-required" class="ml-2 block text-sm text-slate-900">Wajib Diisi (Required)</label>
+                        </div>
+
+                        <div class="bg-blue-50 p-3 rounded-lg text-xs text-blue-700">
+                            <strong>Info:</strong> Nama teknis (variable name) akan dibuat otomatis dari Label.
+                        </div>
+
+                    </form>
+                </div>
+                <div class="bg-slate-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-2">
+                    <button type="button" onclick="saveField()" class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:w-auto sm:text-sm">
+                        Simpan
+                    </button>
+                    <button type="button" onclick="closeFieldModal()" class="w-full inline-flex justify-center rounded-lg border border-slate-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-slate-700 hover:text-slate-500 focus:outline-none sm:w-auto sm:text-sm">
+                        Batal
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/config.js"></script>
+    <script src="../js/admin-settings-form.js"></script>
+</body>
+</html>

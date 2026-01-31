@@ -18,7 +18,8 @@ CREATE TABLE IF NOT EXISTS public.pendaftaran (
     foto_url TEXT,
     kk_url TEXT,
     akte_url TEXT,
-    status TEXT DEFAULT 'Menunggu Verifikasi'
+    status TEXT DEFAULT 'Menunggu Verifikasi',
+    custom_data JSONB DEFAULT '{}'::JSONB
 );
 
 -- Enable Row Level Security (RLS)
@@ -66,7 +67,7 @@ USING (true);
 -- NEW TABLES FOR ADMIN FEATURES
 -- ==========================================
 
--- 1. App Settings (For Open/Close Registration)
+-- 1. App Settings (For Open/Close Registration & School Info)
 CREATE TABLE IF NOT EXISTS public.app_settings (
     key TEXT PRIMARY KEY,
     value JSONB NOT NULL
@@ -89,6 +90,10 @@ INSERT INTO public.app_settings (key, value)
 VALUES ('registration_status', '"open"')
 ON CONFLICT (key) DO NOTHING;
 
+INSERT INTO public.app_settings (key, value)
+VALUES ('school_profile', '{"nama_sekolah": "SD INPRES LELINGLUAN", "alamat": "Jl. Contoh No. 123, Desa Lelingluan", "kepala_sekolah": "SOFERET S DOMAKUBUN, S.Pd", "logo_url": "https://via.placeholder.com/150"}')
+ON CONFLICT (key) DO NOTHING;
+
 
 -- 2. Admin Profiles (To list committee members)
 CREATE TABLE IF NOT EXISTS public.admin_profiles (
@@ -105,6 +110,55 @@ DROP POLICY IF EXISTS "Enable full access for admin profiles" ON public.admin_pr
 
 CREATE POLICY "Enable full access for admin profiles"
 ON public.admin_profiles FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+
+-- 3. Form Fields (For Dynamic Form Builder)
+CREATE TABLE IF NOT EXISTS public.form_fields (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    label TEXT NOT NULL,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL, -- text, date, select, textarea, file
+    required BOOLEAN DEFAULT false,
+    options TEXT, -- JSON array string or comma separated for select
+    section TEXT DEFAULT 'default', -- identity, parents, files, custom
+    order_index INTEGER DEFAULT 0
+);
+
+ALTER TABLE public.form_fields ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Enable read for public form_fields" ON public.form_fields;
+DROP POLICY IF EXISTS "Enable full access for admin form_fields" ON public.form_fields;
+
+CREATE POLICY "Enable read for public form_fields"
+ON public.form_fields FOR SELECT TO anon USING (true);
+
+CREATE POLICY "Enable full access for admin form_fields"
+ON public.form_fields FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- Seed Initial Form Fields (Only if table is empty)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM public.form_fields) THEN
+        INSERT INTO public.form_fields (label, name, type, required, section, order_index, options) VALUES
+        ('Nama Lengkap', 'nama_lengkap', 'text', true, 'identity', 1, NULL),
+        ('NIK', 'nik', 'number', true, 'identity', 2, NULL),
+        ('Tempat Lahir', 'tempat_lahir', 'text', true, 'identity', 3, NULL),
+        ('Tanggal Lahir', 'tanggal_lahir', 'date', true, 'identity', 4, NULL),
+        ('Jenis Kelamin', 'jenis_kelamin', 'select', true, 'identity', 5, 'Laki-laki,Perempuan'),
+        ('Agama', 'agama', 'select', true, 'identity', 6, 'Islam,Kristen,Katolik,Hindu,Buddha,Konghucu'),
+        ('Alamat Lengkap', 'alamat', 'textarea', true, 'identity', 7, NULL),
+        ('Asal Sekolah', 'asal_sekolah', 'text', false, 'identity', 8, NULL),
+        ('Nama Ayah', 'nama_ayah', 'text', true, 'parents', 9, NULL),
+        ('Pekerjaan Ayah', 'pekerjaan_ayah', 'text', false, 'parents', 10, NULL),
+        ('Nama Ibu', 'nama_ibu', 'text', true, 'parents', 11, NULL),
+        ('Pekerjaan Ibu', 'pekerjaan_ibu', 'text', false, 'parents', 12, NULL),
+        ('No. HP / WhatsApp', 'no_hp', 'number', true, 'parents', 13, NULL),
+        ('Pas Foto (Maks 2MB)', 'file_foto', 'file', true, 'files', 14, NULL),
+        ('Kartu Keluarga (KK)', 'file_kk', 'file', true, 'files', 15, NULL),
+        ('Akta Kelahiran', 'file_akte', 'file', true, 'files', 16, NULL);
+    END IF;
+END $$;
 
 
 -- ==========================================
