@@ -116,64 +116,6 @@
 
     </main>
 
-    <!-- Modal Detail & Edit -->
-    <div id="modal-detail" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <!-- Background overlay -->
-            <div class="fixed inset-0 bg-slate-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeModal()"></div>
-
-            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-            <!-- Modal panel -->
-            <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
-
-                <!-- Modal Header -->
-                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 border-b border-slate-100 flex justify-between items-center">
-                    <h3 class="text-lg leading-6 font-bold text-slate-900" id="modal-title">Detail Pendaftar</h3>
-                    <div class="flex gap-2">
-                        <button id="btn-edit-toggle" onclick="toggleEditMode()" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                            Edit Data
-                        </button>
-                        <button onclick="closeModal()" class="text-slate-400 hover:text-slate-500 ml-4">
-                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Modal Body -->
-                <div class="px-4 py-5 sm:p-6 bg-slate-50/50">
-                    <form id="form-edit">
-                        <div id="modal-content" class="space-y-6">
-                            <!-- Content injected via JS -->
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Modal Footer -->
-                <div class="bg-white px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-2 border-t border-slate-100">
-                    <button type="button" class="mt-3 w-full inline-flex justify-center rounded-lg border border-slate-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-slate-700 hover:bg-slate-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" onclick="closeModal()">
-                        Tutup
-                    </button>
-
-                    <!-- Edit Mode Buttons -->
-                    <button id="btn-save-edit" type="button" onclick="saveEdit()" class="hidden w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
-                        Simpan Perubahan
-                    </button>
-
-                    <!-- View Mode Buttons -->
-                    <div id="action-buttons" class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                        <button id="btn-accept" type="button" class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none sm:w-auto sm:text-sm">
-                            Terima Siswa
-                        </button>
-                        <button id="btn-reject" type="button" class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none sm:w-auto sm:text-sm">
-                            Tolak
-                        </button>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </div>
 
     <!-- Scripts -->
     <script src="../js/config.js"></script>
