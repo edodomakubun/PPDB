@@ -84,7 +84,7 @@ function renderTable(data) {
                     </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <a href="detail-siswa.html?id=${item.id}" target="_blank" class="text-blue-600 hover:text-blue-900 mr-3">Detail/Edit</a>
+                    <a href="detail-siswa.html?id=${item.id}" class="text-blue-600 hover:text-blue-900 mr-3">Detail/Edit</a>
                     <button onclick="deleteData('${item.id}')" class="text-red-600 hover:text-red-900">Hapus</button>
                 </td>
             </tr>
