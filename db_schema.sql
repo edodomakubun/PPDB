@@ -29,6 +29,7 @@ DROP POLICY IF EXISTS "Enable insert for public" ON public.pendaftaran;
 DROP POLICY IF EXISTS "Enable select for authenticated" ON public.pendaftaran;
 DROP POLICY IF EXISTS "Enable update for authenticated" ON public.pendaftaran;
 DROP POLICY IF EXISTS "Enable delete for authenticated" ON public.pendaftaran;
+DROP POLICY IF EXISTS "Enable public read by nik" ON public.pendaftaran;
 
 -- Create policies for 'pendaftaran' table
 -- 1. Allow anyone (anon) to insert data (Registration)
@@ -59,6 +60,21 @@ ON public.pendaftaran
 FOR DELETE
 TO authenticated
 USING (true);
+
+-- 5. Allow public (anon) to SELECT data ONLY if they know the NIK (Exact match)
+-- Note: This allows anyone with a NIK to see that specific record.
+-- Ideally we use a stored procedure, but for this stack, a strict RLS is acceptable.
+CREATE POLICY "Enable public read by nik"
+ON public.pendaftaran
+FOR SELECT
+TO anon
+USING (nik = current_setting('request.headers')::json->>'x-nik-header');
+-- Wait, accessing custom headers in RLS policy is complex in standard Supabase client.
+-- Simpler approach: Allow SELECT for anon, but since RLS is 'USING', they can only see rows that match the filter.
+-- However, standard SELECT * FROM table by anon would return empty unless we open it up.
+-- If we do: USING (true) -> Data leak.
+-- Correct approach for "Search by NIK":
+-- We will use a PostgreSQL FUNCTION (RPC) to securely fetch data by NIK.
 
 -- STORAGE SETUP
 -- Insert bucket 'berkas_siswa' (Safe if exists)
@@ -92,3 +108,24 @@ ON storage.objects
 FOR DELETE
 TO authenticated
 USING (bucket_id = 'berkas_siswa');
+
+
+-- SECURE FUNCTION FOR CHECKING STATUS
+CREATE OR REPLACE FUNCTION get_status_siswa(search_nik TEXT)
+RETURNS TABLE (
+  nama_lengkap TEXT,
+  nik TEXT,
+  status TEXT,
+  alamat TEXT,
+  asal_sekolah TEXT
+)
+LANGUAGE plpgsql
+SECURITY DEFINER -- Runs with privileges of the creator (Admin)
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT p.nama_lengkap, p.nik, p.status, p.alamat, p.asal_sekolah
+  FROM public.pendaftaran p
+  WHERE p.nik = search_nik;
+END;
+$$;

@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const uploadFile = async (file, prefix) => {
                 const fileExt = file.name.split('.').pop();
                 const fileName = `${prefix}_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-                const filePath = `${fileName}`; // Flat structure or folder? Let's use flat for simplicity with unique names
+                const filePath = `${fileName}`;
 
                 const { data, error } = await supabaseClient.storage
                     .from('berkas_siswa')
@@ -92,14 +92,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (dbError) throw dbError;
 
-            // Success
-            Swal.fire({
-                title: 'Pendaftaran Berhasil!',
-                text: 'Data Anda telah kami terima. Panitia akan segera menghubungi Anda.',
-                icon: 'success',
-                confirmButtonText: 'Kembali ke Beranda'
-            }).then(() => {
-                window.location.href = 'index.html';
+            // Success - Show Registration Card
+            showRegistrationCard({
+                nama: formData.get('nama_lengkap'),
+                nik: formData.get('nik'),
+                tanggal: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
             });
 
         } catch (error) {
@@ -110,3 +107,64 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+function showRegistrationCard(data) {
+    // Hide form, show card
+    const mainContent = document.querySelector('main .max-w-3xl');
+    mainContent.innerHTML = `
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 text-center" id="print-area">
+            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center text-green-600 mx-auto mb-6">
+                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            <h2 class="text-3xl font-bold text-slate-900 mb-2">Pendaftaran Berhasil!</h2>
+            <p class="text-slate-600 mb-8">Data Anda telah kami terima. Silakan simpan kartu ini sebagai bukti pendaftaran.</p>
+
+            <div class="bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl p-6 max-w-md mx-auto mb-8 text-left relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">BUKTI DAFTAR</div>
+                <h3 class="text-lg font-bold text-slate-900 mb-4 border-b pb-2">Kartu Pendaftaran</h3>
+                <div class="space-y-3">
+                    <div>
+                        <span class="text-xs text-slate-500 uppercase tracking-wider block">Nama Lengkap</span>
+                        <span class="font-semibold text-slate-900 text-lg">${data.nama}</span>
+                    </div>
+                    <div>
+                        <span class="text-xs text-slate-500 uppercase tracking-wider block">NIK / Kode Pendaftaran</span>
+                        <span class="font-mono font-bold text-blue-600 text-xl tracking-wider">${data.nik}</span>
+                    </div>
+                    <div>
+                        <span class="text-xs text-slate-500 uppercase tracking-wider block">Tanggal Daftar</span>
+                        <span class="font-medium text-slate-700">${data.tanggal}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-4 justify-center no-print">
+                <button onclick="window.print()" class="px-6 py-3 bg-slate-800 hover:bg-slate-900 text-white rounded-lg font-bold transition shadow-lg flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                    Cetak Kartu
+                </button>
+                <a href="index.html" class="px-6 py-3 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg font-medium transition flex items-center justify-center">
+                    Kembali ke Beranda
+                </a>
+            </div>
+
+            <p class="text-sm text-slate-500 mt-8">
+                Gunakan NIK Anda untuk mengecek status kelulusan di halaman <a href="cek-status.html" class="text-blue-600 hover:underline">Cek Status</a>.
+            </p>
+        </div>
+
+        <style>
+            @media print {
+                body * { visibility: hidden; }
+                #print-area, #print-area * { visibility: visible; }
+                #print-area { position: absolute; left: 0; top: 0; width: 100%; border: none; shadow: none; }
+                .no-print { display: none !important; }
+                nav, footer { display: none; }
+            }
+        </style>
+    `;
+
+    // Scroll to top
+    window.scrollTo(0, 0);
+    Swal.close();
+}
