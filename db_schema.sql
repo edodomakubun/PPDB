@@ -1,5 +1,5 @@
--- Create the 'pendaftaran' table
-CREATE TABLE public.pendaftaran (
+-- Create the 'pendaftaran' table (Safe if exists)
+CREATE TABLE IF NOT EXISTS public.pendaftaran (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     nama_lengkap TEXT NOT NULL,
@@ -23,6 +23,12 @@ CREATE TABLE public.pendaftaran (
 
 -- Enable Row Level Security (RLS)
 ALTER TABLE public.pendaftaran ENABLE ROW LEVEL SECURITY;
+
+-- CLEANUP OLD POLICIES (To avoid errors on re-run)
+DROP POLICY IF EXISTS "Enable insert for public" ON public.pendaftaran;
+DROP POLICY IF EXISTS "Enable select for authenticated" ON public.pendaftaran;
+DROP POLICY IF EXISTS "Enable update for authenticated" ON public.pendaftaran;
+DROP POLICY IF EXISTS "Enable delete for authenticated" ON public.pendaftaran;
 
 -- Create policies for 'pendaftaran' table
 -- 1. Allow anyone (anon) to insert data (Registration)
@@ -54,12 +60,18 @@ FOR DELETE
 TO authenticated
 USING (true);
 
--- STORAGE POLICIES (Must be run in SQL Editor as well)
 -- STORAGE SETUP
--- Insert bucket 'berkas_siswa' into storage.buckets
-INSERT INTO storage.buckets (id, name, public) VALUES ('berkas_siswa', 'berkas_siswa', false);
+-- Insert bucket 'berkas_siswa' (Safe if exists)
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('berkas_siswa', 'berkas_siswa', false)
+ON CONFLICT (id) DO NOTHING;
 
 -- STORAGE POLICIES
+-- Clean up old storage policies
+DROP POLICY IF EXISTS "Enable upload for public" ON storage.objects;
+DROP POLICY IF EXISTS "Enable select for authenticated" ON storage.objects;
+DROP POLICY IF EXISTS "Enable delete for authenticated" ON storage.objects;
+
 -- 1. Allow public to upload files to 'berkas_siswa'
 CREATE POLICY "Enable upload for public"
 ON storage.objects
