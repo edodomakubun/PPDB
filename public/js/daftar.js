@@ -14,8 +14,64 @@ document.addEventListener('DOMContentLoaded', async () => {
     const form = document.getElementById('form-daftar');
     if (form) {
         form.addEventListener('submit', handleFormSubmit);
+
+        // Add NIK Validation Listener
+        const nikInput = document.querySelector('input[name="nik"]');
+        if (nikInput) {
+            nikInput.addEventListener('change', validateNik);
+        }
     }
 });
+
+async function validateNik(e) {
+    const nik = e.target.value;
+    if (!nik) return;
+
+    if (nik.length !== 16 || isNaN(nik)) {
+        Swal.fire({
+            title: 'Format NIK Salah',
+            text: 'NIK harus terdiri dari 16 digit angka.',
+            icon: 'warning',
+            timer: 2000,
+            showConfirmButton: false,
+            target: document.getElementById('form-daftar') // Show localized toast-like
+        });
+        e.target.value = '';
+        return;
+    }
+
+    try {
+        const { data, error } = await supabaseClient.rpc('check_nik_availability', { check_nik: nik });
+
+        if (error) throw error;
+
+        if (data === true) {
+            Swal.fire({
+                title: 'NIK Terdaftar',
+                text: 'NIK ini sudah terdaftar sebelumnya. Silakan cek status pendaftaran Anda.',
+                icon: 'error',
+                confirmButtonText: 'Cek Status',
+                target: document.getElementById('form-daftar')
+            }).then((res) => {
+                if (res.isConfirmed) window.location.href = 'cek-status.html';
+            });
+            e.target.value = '';
+        } else {
+            // Success Toast
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+            Toast.fire({ icon: 'success', title: 'NIK Valid dan Tersedia' });
+        }
+
+    } catch (err) {
+        console.error('NIK check error:', err);
+    }
+}
 
 async function checkRegistrationStatus() {
     try {

@@ -206,6 +206,45 @@ ON public.audit_logs FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 
 -- ==========================================
+-- FEATURE TABLES: FAQ & GALLERY
+-- ==========================================
+
+-- 6. FAQs
+CREATE TABLE IF NOT EXISTS public.faqs (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    question TEXT NOT NULL,
+    answer TEXT NOT NULL,
+    order_index INTEGER DEFAULT 0
+);
+
+ALTER TABLE public.faqs ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Enable read for public faqs" ON public.faqs;
+DROP POLICY IF EXISTS "Enable full access for admin faqs" ON public.faqs;
+
+CREATE POLICY "Enable read for public faqs" ON public.faqs FOR SELECT TO anon USING (true);
+CREATE POLICY "Enable full access for admin faqs" ON public.faqs FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+
+-- 7. Gallery
+CREATE TABLE IF NOT EXISTS public.school_gallery (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    image_url TEXT NOT NULL,
+    caption TEXT
+);
+
+ALTER TABLE public.school_gallery ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Enable read for public gallery" ON public.school_gallery;
+DROP POLICY IF EXISTS "Enable full access for admin gallery" ON public.school_gallery;
+
+CREATE POLICY "Enable read for public gallery" ON public.school_gallery FOR SELECT TO anon USING (true);
+CREATE POLICY "Enable full access for admin gallery" ON public.school_gallery FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+
+-- ==========================================
 -- STORAGE SETUP
 -- ==========================================
 -- Insert bucket 'berkas_siswa' (Safe if exists)
@@ -213,32 +252,42 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('berkas_siswa', 'berkas_siswa', false)
 ON CONFLICT (id) DO NOTHING;
 
+-- Insert bucket 'gallery_images' (Public Access)
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('gallery_images', 'gallery_images', true)
+ON CONFLICT (id) DO NOTHING;
+
+
 -- STORAGE POLICIES
 -- Clean up old storage policies
 DROP POLICY IF EXISTS "Enable upload for public" ON storage.objects;
 DROP POLICY IF EXISTS "Enable select for authenticated" ON storage.objects;
 DROP POLICY IF EXISTS "Enable delete for authenticated" ON storage.objects;
+DROP POLICY IF EXISTS "Enable read for public gallery" ON storage.objects;
+DROP POLICY IF EXISTS "Enable full access for admin gallery" ON storage.objects;
 
--- 1. Allow public to upload files to 'berkas_siswa'
-CREATE POLICY "Enable upload for public"
-ON storage.objects
-FOR INSERT
-TO anon
+-- 1. BERKAS SISWA POLICIES
+CREATE POLICY "Enable upload for public berkas"
+ON storage.objects FOR INSERT TO anon
 WITH CHECK (bucket_id = 'berkas_siswa');
 
--- 2. Allow authenticated users (Admin) to view/download files
-CREATE POLICY "Enable select for authenticated"
-ON storage.objects
-FOR SELECT
-TO authenticated
+CREATE POLICY "Enable select for authenticated berkas"
+ON storage.objects FOR SELECT TO authenticated
 USING (bucket_id = 'berkas_siswa');
 
--- 3. Allow authenticated users to delete files
-CREATE POLICY "Enable delete for authenticated"
-ON storage.objects
-FOR DELETE
-TO authenticated
+CREATE POLICY "Enable delete for authenticated berkas"
+ON storage.objects FOR DELETE TO authenticated
 USING (bucket_id = 'berkas_siswa');
+
+-- 2. GALLERY POLICIES
+CREATE POLICY "Enable read for public gallery"
+ON storage.objects FOR SELECT TO anon
+USING (bucket_id = 'gallery_images');
+
+CREATE POLICY "Enable full access for admin gallery"
+ON storage.objects FOR ALL TO authenticated
+USING (bucket_id = 'gallery_images')
+WITH CHECK (bucket_id = 'gallery_images');
 
 
 -- SECURE FUNCTION FOR CHECKING STATUS
@@ -258,5 +307,16 @@ BEGIN
   SELECT p.nama_lengkap, p.nik, p.status, p.alamat, p.asal_sekolah
   FROM public.pendaftaran p
   WHERE p.nik = search_nik;
+END;
+$$;
+
+-- SECURE FUNCTION FOR CHECKING NIK EXISTENCE
+CREATE OR REPLACE FUNCTION check_nik_availability(check_nik TEXT)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  RETURN EXISTS (SELECT 1 FROM public.pendaftaran WHERE nik = check_nik);
 END;
 $$;
