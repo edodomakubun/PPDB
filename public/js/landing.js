@@ -19,6 +19,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         observer.observe(el);
     });
 
+    // Share observer for dynamic content
+    window.sharedObserver = observer;
+
     // 2. Navbar Scroll Effect
     const navbar = document.getElementById('navbar');
     window.addEventListener('scroll', () => {
@@ -130,6 +133,11 @@ async function loadGalleryPublic() {
             `;
             container.insertAdjacentHTML('beforeend', html);
         });
+
+        // Observe new elements
+        if (window.sharedObserver) {
+            container.querySelectorAll('.fade-in-up').forEach(el => window.sharedObserver.observe(el));
+        }
     } else {
         container.innerHTML = '<div class="col-span-full text-center text-slate-400">Belum ada foto galeri.</div>';
     }
@@ -160,6 +168,11 @@ async function loadFaqPublic() {
             `;
             container.insertAdjacentHTML('beforeend', html);
         });
+
+        // Observe new elements
+        if (window.sharedObserver) {
+            container.querySelectorAll('.fade-in-up').forEach(el => window.sharedObserver.observe(el));
+        }
     } else {
         container.innerHTML = '<div class="text-center text-slate-400">Belum ada FAQ.</div>';
     }
