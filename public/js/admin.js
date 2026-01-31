@@ -108,96 +108,126 @@ function filterData() {
 
 // Global modal helpers
 async function showDetail(id) {
-    const item = allData.find(d => d.id === id);
-    if (!item) return;
-    currentId = id;
-    isEditMode = false; // Reset edit mode
-    updateModalUI();
+    try {
+        // Use loose equality (==) to match if id is number vs string
+        const item = allData.find(d => d.id == id);
+        if (!item) {
+            console.error('Data not found for ID:', id);
+            Swal.fire('Error', 'Data siswa tidak ditemukan.', 'error');
+            return;
+        }
 
-    // Generate Signed URLs for files
-    const getUrl = async (path) => {
-        if (!path) return '#';
-        const { data } = await supabaseClient.storage.from('berkas_siswa').createSignedUrl(path, 3600);
-        return data?.signedUrl || '#';
-    };
+        Swal.fire({
+            title: 'Memuat data...',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
 
-    const fotoSigned = await getUrl(item.foto_url);
-    const kkSigned = await getUrl(item.kk_url);
-    const akteSigned = await getUrl(item.akte_url);
+        currentId = id;
+        isEditMode = false; // Reset edit mode
+        updateModalUI();
 
-    // Populate Modal with Input Fields (disabled by default)
-    const renderField = (label, name, value, type = 'text') => `
-        <div class="mb-2">
-            <label class="block text-xs font-semibold text-slate-500 mb-1">${label}</label>
-            <input type="${type}" name="${name}" value="${value || ''}" class="data-field w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-900 bg-white disabled:bg-slate-50 disabled:text-slate-600 disabled:border-transparent transition" disabled>
-        </div>
-    `;
+        // Generate Signed URLs for files
+        const getUrl = async (path) => {
+            if (!path) return '#';
+            try {
+                const { data, error } = await supabaseClient.storage.from('berkas_siswa').createSignedUrl(path, 3600);
+                if (error) console.error('Error signing URL:', error);
+                return data?.signedUrl || '#';
+            } catch (e) {
+                console.error('Error signing URL:', e);
+                return '#';
+            }
+        };
 
-    document.getElementById('modal-content').innerHTML = `
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-                <h4 class="font-bold text-slate-900 mb-4 border-b pb-2">Data Siswa</h4>
-                ${renderField('Nama Lengkap', 'nama_lengkap', item.nama_lengkap)}
-                ${renderField('NIK', 'nik', item.nik)}
-                <div class="grid grid-cols-2 gap-2">
-                    ${renderField('Tempat Lahir', 'tempat_lahir', item.tempat_lahir)}
-                    ${renderField('Tanggal Lahir', 'tanggal_lahir', item.tanggal_lahir, 'date')}
-                </div>
-                ${renderField('Jenis Kelamin', 'jenis_kelamin', item.jenis_kelamin)}
-                ${renderField('Agama', 'agama', item.agama)}
-                ${renderField('Alamat', 'alamat', item.alamat)}
-                ${renderField('Asal Sekolah', 'asal_sekolah', item.asal_sekolah)}
+        const fotoSigned = await getUrl(item.foto_url);
+        const kkSigned = await getUrl(item.kk_url);
+        const akteSigned = await getUrl(item.akte_url);
+
+        // Populate Modal with Input Fields (disabled by default)
+        const renderField = (label, name, value, type = 'text') => {
+            const safeValue = value ? String(value).replace(/"/g, '&quot;') : '';
+            return `
+            <div class="mb-2">
+                <label class="block text-xs font-semibold text-slate-500 mb-1">${label}</label>
+                <input type="${type}" name="${name}" value="${safeValue}" class="data-field w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-900 bg-white disabled:bg-slate-50 disabled:text-slate-600 disabled:border-transparent transition" disabled>
             </div>
-            <div>
-                <h4 class="font-bold text-slate-900 mb-4 border-b pb-2">Data Orang Tua</h4>
-                ${renderField('Nama Ayah', 'nama_ayah', item.nama_ayah)}
-                ${renderField('Pekerjaan Ayah', 'pekerjaan_ayah', item.pekerjaan_ayah)}
-                ${renderField('Nama Ibu', 'nama_ibu', item.nama_ibu)}
-                ${renderField('Pekerjaan Ibu', 'pekerjaan_ibu', item.pekerjaan_ibu)}
-                ${renderField('No HP/WA', 'no_hp', item.no_hp)}
+            `;
+        };
 
-                <div class="mt-6 p-4 bg-white rounded-xl border border-slate-200">
-                     <h4 class="font-bold text-slate-900 mb-3 text-sm">Status Pendaftaran</h4>
-                     <p class="text-sm font-medium mb-2">Saat ini: <span class="text-blue-600">${item.status}</span></p>
+        document.getElementById('modal-content').innerHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h4 class="font-bold text-slate-900 mb-4 border-b pb-2">Data Siswa</h4>
+                    ${renderField('Nama Lengkap', 'nama_lengkap', item.nama_lengkap)}
+                    ${renderField('NIK', 'nik', item.nik)}
+                    <div class="grid grid-cols-2 gap-2">
+                        ${renderField('Tempat Lahir', 'tempat_lahir', item.tempat_lahir)}
+                        ${renderField('Tanggal Lahir', 'tanggal_lahir', item.tanggal_lahir, 'date')}
+                    </div>
+                    ${renderField('Jenis Kelamin', 'jenis_kelamin', item.jenis_kelamin)}
+                    ${renderField('Agama', 'agama', item.agama)}
+                    ${renderField('Alamat', 'alamat', item.alamat)}
+                    ${renderField('Asal Sekolah', 'asal_sekolah', item.asal_sekolah)}
+                </div>
+                <div>
+                    <h4 class="font-bold text-slate-900 mb-4 border-b pb-2">Data Orang Tua</h4>
+                    ${renderField('Nama Ayah', 'nama_ayah', item.nama_ayah)}
+                    ${renderField('Pekerjaan Ayah', 'pekerjaan_ayah', item.pekerjaan_ayah)}
+                    ${renderField('Nama Ibu', 'nama_ibu', item.nama_ibu)}
+                    ${renderField('Pekerjaan Ibu', 'pekerjaan_ibu', item.pekerjaan_ibu)}
+                    ${renderField('No HP/WA', 'no_hp', item.no_hp)}
+
+                    <div class="mt-6 p-4 bg-white rounded-xl border border-slate-200">
+                        <h4 class="font-bold text-slate-900 mb-3 text-sm">Status Pendaftaran</h4>
+                        <p class="text-sm font-medium mb-2">Saat ini: <span class="text-blue-600">${item.status}</span></p>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="mt-6">
-            <h4 class="font-bold text-slate-900 mb-4 border-b pb-1">Berkas Lampiran (Read Only)</h4>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div class="text-center">
-                    <p class="text-xs font-semibold mb-2">Pas Foto</p>
-                    <a href="${fotoSigned}" target="_blank">
-                        <img src="${fotoSigned}" class="h-32 mx-auto object-cover rounded-lg border hover:opacity-75 transition bg-white">
-                    </a>
-                </div>
-                <div class="text-center">
-                    <p class="text-xs font-semibold mb-2">Kartu Keluarga</p>
-                    <a href="${kkSigned}" target="_blank" class="inline-block px-4 py-2 border rounded-lg bg-white hover:bg-slate-50 transition text-blue-600 text-sm font-medium">
-                        Lihat Dokumen
-                    </a>
-                </div>
-                <div class="text-center">
-                    <p class="text-xs font-semibold mb-2">Akta Kelahiran</p>
-                    <a href="${akteSigned}" target="_blank" class="inline-block px-4 py-2 border rounded-lg bg-white hover:bg-slate-50 transition text-blue-600 text-sm font-medium">
-                        Lihat Dokumen
-                    </a>
+            <div class="mt-6">
+                <h4 class="font-bold text-slate-900 mb-4 border-b pb-1">Berkas Lampiran (Read Only)</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="text-center">
+                        <p class="text-xs font-semibold mb-2">Pas Foto</p>
+                        <a href="${fotoSigned}" target="_blank">
+                            <img src="${fotoSigned}" class="h-32 mx-auto object-cover rounded-lg border hover:opacity-75 transition bg-white">
+                        </a>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xs font-semibold mb-2">Kartu Keluarga</p>
+                        <a href="${kkSigned}" target="_blank" class="inline-block px-4 py-2 border rounded-lg bg-white hover:bg-slate-50 transition text-blue-600 text-sm font-medium">
+                            Lihat Dokumen
+                        </a>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xs font-semibold mb-2">Akta Kelahiran</p>
+                        <a href="${akteSigned}" target="_blank" class="inline-block px-4 py-2 border rounded-lg bg-white hover:bg-slate-50 transition text-blue-600 text-sm font-medium">
+                            Lihat Dokumen
+                        </a>
+                    </div>
                 </div>
             </div>
-        </div>
-    `;
+        `;
 
-    // Configure Action Buttons
-    const btnAccept = document.getElementById('btn-accept');
-    const btnReject = document.getElementById('btn-reject');
+        // Configure Action Buttons
+        const btnAccept = document.getElementById('btn-accept');
+        const btnReject = document.getElementById('btn-reject');
 
-    btnAccept.onclick = () => updateStatus(id, 'Diterima');
-    btnReject.onclick = () => updateStatus(id, 'Ditolak');
+        btnAccept.onclick = () => updateStatus(id, 'Diterima');
+        btnReject.onclick = () => updateStatus(id, 'Ditolak');
 
-    // Show
-    document.getElementById('modal-detail').classList.remove('hidden');
-    document.body.classList.add('modal-active');
+        // Close loading
+        Swal.close();
+
+        // Show
+        document.getElementById('modal-detail').classList.remove('hidden');
+        document.body.classList.add('modal-active');
+
+    } catch (error) {
+        console.error('Error in showDetail:', error);
+        Swal.fire('Error', 'Gagal memuat detail data.', 'error');
+    }
 }
 
 function closeModal() {
