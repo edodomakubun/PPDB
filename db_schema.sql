@@ -61,22 +61,55 @@ FOR DELETE
 TO authenticated
 USING (true);
 
--- 5. Allow public (anon) to SELECT data ONLY if they know the NIK (Exact match)
--- Note: This allows anyone with a NIK to see that specific record.
--- Ideally we use a stored procedure, but for this stack, a strict RLS is acceptable.
-CREATE POLICY "Enable public read by nik"
-ON public.pendaftaran
-FOR SELECT
-TO anon
-USING (nik = current_setting('request.headers')::json->>'x-nik-header');
--- Wait, accessing custom headers in RLS policy is complex in standard Supabase client.
--- Simpler approach: Allow SELECT for anon, but since RLS is 'USING', they can only see rows that match the filter.
--- However, standard SELECT * FROM table by anon would return empty unless we open it up.
--- If we do: USING (true) -> Data leak.
--- Correct approach for "Search by NIK":
--- We will use a PostgreSQL FUNCTION (RPC) to securely fetch data by NIK.
 
+-- ==========================================
+-- NEW TABLES FOR ADMIN FEATURES
+-- ==========================================
+
+-- 1. App Settings (For Open/Close Registration)
+CREATE TABLE IF NOT EXISTS public.app_settings (
+    key TEXT PRIMARY KEY,
+    value JSONB NOT NULL
+);
+
+ALTER TABLE public.app_settings ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Admin can do everything, Public can READ ONLY
+DROP POLICY IF EXISTS "Enable read for public settings" ON public.app_settings;
+DROP POLICY IF EXISTS "Enable full access for admin settings" ON public.app_settings;
+
+CREATE POLICY "Enable read for public settings"
+ON public.app_settings FOR SELECT TO anon USING (true);
+
+CREATE POLICY "Enable full access for admin settings"
+ON public.app_settings FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- Insert default setting if not exists
+INSERT INTO public.app_settings (key, value)
+VALUES ('registration_status', '"open"')
+ON CONFLICT (key) DO NOTHING;
+
+
+-- 2. Admin Profiles (To list committee members)
+CREATE TABLE IF NOT EXISTS public.admin_profiles (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    nama TEXT
+);
+
+ALTER TABLE public.admin_profiles ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Only Admins can view/manage this table
+DROP POLICY IF EXISTS "Enable full access for admin profiles" ON public.admin_profiles;
+
+CREATE POLICY "Enable full access for admin profiles"
+ON public.admin_profiles FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+
+-- ==========================================
 -- STORAGE SETUP
+-- ==========================================
 -- Insert bucket 'berkas_siswa' (Safe if exists)
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('berkas_siswa', 'berkas_siswa', false)

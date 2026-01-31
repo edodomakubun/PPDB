@@ -1,4 +1,7 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Check Registration Status first
+    await checkRegistrationStatus();
+
     const form = document.getElementById('form-daftar');
     const btnSubmit = document.getElementById('btn-submit');
 
@@ -107,6 +110,35 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+async function checkRegistrationStatus() {
+    try {
+        const { data, error } = await supabaseClient
+            .from('app_settings')
+            .select('value')
+            .eq('key', 'registration_status')
+            .single();
+
+        if (data && data.value === 'closed') {
+            // Hide Form and Show Message
+            const container = document.querySelector('main');
+            container.innerHTML = `
+                <div class="max-w-2xl mx-auto py-20 px-4 text-center">
+                    <div class="bg-red-50 p-8 rounded-2xl border border-red-100">
+                        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                        </div>
+                        <h2 class="text-2xl font-bold text-red-800 mb-2">Pendaftaran Ditutup</h2>
+                        <p class="text-red-600">Mohon maaf, pendaftaran siswa baru saat ini sedang tidak menerima data baru. Silakan hubungi panitia untuk informasi lebih lanjut.</p>
+                        <a href="index.html" class="inline-block mt-6 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">Kembali ke Beranda</a>
+                    </div>
+                </div>
+            `;
+        }
+    } catch (err) {
+        console.warn('Gagal cek status pendaftaran:', err);
+    }
+}
 
 function showRegistrationCard(data) {
     // Hide form, show card

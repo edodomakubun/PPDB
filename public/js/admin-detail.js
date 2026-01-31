@@ -33,6 +33,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 4. Setup Event Listeners
     setupEventListeners();
+
+    // 5. Update Print Link
+    document.getElementById('btn-print').href = `../cetak-kartu.html?id=${studentId}`;
 });
 
 async function loadStudentData(id) {
