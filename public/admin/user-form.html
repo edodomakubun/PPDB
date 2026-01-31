@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form User Panitia - SD INPRES LELINGLUAN</title>
+    <!-- Tailwind CSS v4 -->
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased">
+
+    <!-- Navbar -->
+    <nav class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">SD</div>
+                    <span class="font-bold text-lg text-slate-900">Panel Panitia</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span id="user-email" class="text-sm text-slate-500 hidden sm:block"></span>
+                    <a href="dashboard.html" class="text-sm font-medium text-slate-600 hover:text-blue-600 transition">Dashboard</a>
+                    <button id="btn-logout" class="text-sm font-medium text-red-600 hover:text-red-700 transition">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-8">
+            <a href="users.html" class="text-slate-500 hover:text-blue-600 text-sm mb-2 inline-flex items-center">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                Kembali ke Daftar Panitia
+            </a>
+            <h1 class="text-2xl font-bold text-slate-900" id="page-title">Tambah Panitia Baru</h1>
+            <p class="text-slate-500">Isi formulir di bawah ini untuk menambahkan akun panitia baru.</p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-6 sm:p-8">
+                <form id="form-user" class="space-y-6">
+                    <!-- Name Field -->
+                    <div>
+                        <label for="nama" class="block text-sm font-medium text-slate-700 mb-1">Nama Lengkap</label>
+                        <input type="text" id="nama" name="nama" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition">
+                    </div>
+
+                    <!-- Email Field -->
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-slate-700 mb-1">Alamat Email</label>
+                        <input type="email" id="email" name="email" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition">
+                        <p class="text-xs text-slate-500 mt-1">Digunakan untuk login ke panel admin.</p>
+                    </div>
+
+                    <!-- Password Field (Only for Add Mode) -->
+                    <div id="password-section">
+                        <label for="password" class="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                        <input type="password" id="password" name="password" minlength="6" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition">
+                        <p class="text-xs text-slate-500 mt-1">Minimal 6 karakter.</p>
+                    </div>
+
+                    <!-- Reset Password Section (Only for Edit Mode) -->
+                    <div id="reset-password-section" class="hidden pt-6 border-t border-slate-100">
+                        <h3 class="text-lg font-bold text-slate-900 mb-2">Reset Password</h3>
+                        <p class="text-sm text-slate-500 mb-4">Kirimkan tautan reset password ke email pengguna ini.</p>
+                        <button type="button" id="btn-reset-password" class="px-4 py-2 bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-lg hover:bg-yellow-100 font-medium text-sm transition">
+                            Kirim Email Reset Password
+                        </button>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="pt-6 border-t border-slate-100 flex justify-end">
+                        <button type="submit" id="btn-submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold shadow-md transition transform hover:-translate-y-0.5">
+                            Simpan Data
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/config.js"></script>
+    <script src="../js/admin-user-form.js"></script>
+</body>
+</html>

@@ -8,6 +8,9 @@
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -63,6 +66,13 @@
                 <a href="cek-status.html" class="inline-flex items-center justify-center px-8 py-3 text-lg font-medium text-blue-700 bg-blue-100 rounded-xl hover:bg-blue-200 transition">
                     Cek Status Saya
                 </a>
+            </div>
+
+            <div class="mt-8">
+                <button onclick="downloadBlankForm()" class="inline-flex items-center px-6 py-2 text-sm font-medium text-slate-500 bg-white/50 hover:bg-white rounded-full border border-slate-200 transition">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Download Formulir Pendaftaran (PDF)
+                </button>
             </div>
         </div>
     </header>
@@ -129,5 +139,6 @@
 
     <!-- Scripts -->
     <script src="js/config.js"></script>
+    <script src="js/download-form.js"></script>
 </body>
 </html>
