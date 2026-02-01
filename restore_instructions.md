@@ -1,6 +1,6 @@
-# Panduan Pemulihan Database (Database Restoration)
+# Panduan Pemulihan Database (Database Restoration) - Revisi
 
-Karena database Anda telah terhapus, ikuti langkah-langkah berikut untuk memulihkan struktur dan data awal sistem SPMB Anda.
+Karena database Anda telah terhapus, ikuti langkah-langkah berikut untuk memulihkan struktur dan data awal sistem SPMB Anda. Script ini telah diperbaiki urutannya untuk mencegah error.
 
 ## Langkah 1: Buka Supabase Dashboard
 1. Login ke [Supabase Dashboard](https://supabase.com/dashboard).
@@ -8,11 +8,51 @@ Karena database Anda telah terhapus, ikuti langkah-langkah berikut untuk memulih
 3. Di menu sebelah kiri, klik ikon **SQL Editor** (gambar terminal/console).
 4. Klik **New Query** (atau tombol "+" hijau) untuk membuat lembar kerja baru.
 
-## Langkah 2: Salin dan Jalankan Kode SQL
+## Langkah 2: Salin dan Jalankan Kode SQL Utama
 Salin **seluruh** kode di bawah ini, tempelkan (paste) ke dalam SQL Editor di Supabase, lalu klik tombol **Run** (kanan bawah editor).
 
 ```sql
--- Create the 'pendaftaran' table (Safe if exists)
+-- ==========================================
+-- 1. ADMIN PROFILES (MUST BE FIRST)
+-- ==========================================
+CREATE TABLE IF NOT EXISTS public.admin_profiles (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    nama TEXT
+);
+
+ALTER TABLE public.admin_profiles ENABLE ROW LEVEL SECURITY;
+
+-- CLEANUP OLD POLICIES TO PREVENT CONFLICTS
+DROP POLICY IF EXISTS "Enable full access for admin profiles" ON public.admin_profiles;
+DROP POLICY IF EXISTS "Enable select for authenticated profiles" ON public.admin_profiles;
+DROP POLICY IF EXISTS "Enable write for admin profiles" ON public.admin_profiles;
+DROP POLICY IF EXISTS "Enable update delete for admin profiles" ON public.admin_profiles;
+DROP POLICY IF EXISTS "Enable delete for admin profiles" ON public.admin_profiles;
+
+-- BOOTSTRAPPING: Allow any authenticated user to SELECT (to check if they are admin)
+CREATE POLICY "Enable select for authenticated profiles"
+ON public.admin_profiles FOR SELECT TO authenticated USING (true);
+
+-- Allow any authenticated user to INSERT (Bootstrap Phase Only - Secure in Prod)
+CREATE POLICY "Enable write for admin profiles"
+ON public.admin_profiles FOR INSERT TO authenticated
+WITH CHECK (true);
+
+-- Allow Admins to Update/Delete
+CREATE POLICY "Enable update delete for admin profiles"
+ON public.admin_profiles FOR UPDATE TO authenticated
+USING (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles));
+
+CREATE POLICY "Enable delete for admin profiles"
+ON public.admin_profiles FOR DELETE TO authenticated
+USING (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles));
+
+
+-- ==========================================
+-- 2. PENDAFTARAN TABLE
+-- ==========================================
 CREATE TABLE IF NOT EXISTS public.pendaftaran (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
@@ -44,52 +84,39 @@ BEGIN
     END IF;
 END $$;
 
--- Enable Row Level Security (RLS)
 ALTER TABLE public.pendaftaran ENABLE ROW LEVEL SECURITY;
 
--- CLEANUP OLD POLICIES (To avoid errors on re-run)
 DROP POLICY IF EXISTS "Enable insert for public" ON public.pendaftaran;
 DROP POLICY IF EXISTS "Enable select for authenticated" ON public.pendaftaran;
 DROP POLICY IF EXISTS "Enable update for authenticated" ON public.pendaftaran;
 DROP POLICY IF EXISTS "Enable delete for authenticated" ON public.pendaftaran;
 DROP POLICY IF EXISTS "Enable public read by nik" ON public.pendaftaran;
 
--- Create policies for 'pendaftaran' table
--- 1. Allow anyone (anon) to insert data (Registration)
+-- 1. Allow anyone (anon) to insert data
 CREATE POLICY "Enable insert for public"
-ON public.pendaftaran
-FOR INSERT
-TO anon
+ON public.pendaftaran FOR INSERT TO anon
 WITH CHECK (true);
 
--- 2. Allow authenticated users (Admin) to view all data
+-- 2. Allow Admins to view all data
 CREATE POLICY "Enable select for authenticated"
-ON public.pendaftaran
-FOR SELECT
-TO authenticated
+ON public.pendaftaran FOR SELECT TO authenticated
 USING (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles));
 
--- 3. Allow authenticated users (Admin) to update data (e.g., change status)
+-- 3. Allow Admins to update data
 CREATE POLICY "Enable update for authenticated"
-ON public.pendaftaran
-FOR UPDATE
-TO authenticated
+ON public.pendaftaran FOR UPDATE TO authenticated
 USING (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles))
 WITH CHECK (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles));
 
--- 4. Allow authenticated users (Admin) to delete data
+-- 4. Allow Admins to delete data
 CREATE POLICY "Enable delete for authenticated"
-ON public.pendaftaran
-FOR DELETE
-TO authenticated
+ON public.pendaftaran FOR DELETE TO authenticated
 USING (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles));
 
 
 -- ==========================================
--- NEW TABLES FOR ADMIN FEATURES
+-- 3. APP SETTINGS
 -- ==========================================
-
--- 1. App Settings (For Open/Close Registration & School Info)
 CREATE TABLE IF NOT EXISTS public.app_settings (
     key TEXT PRIMARY KEY,
     value JSONB NOT NULL
@@ -97,19 +124,19 @@ CREATE TABLE IF NOT EXISTS public.app_settings (
 
 ALTER TABLE public.app_settings ENABLE ROW LEVEL SECURITY;
 
--- Policy: Admin can do everything, Public can READ ONLY
 DROP POLICY IF EXISTS "Enable read for public settings" ON public.app_settings;
 DROP POLICY IF EXISTS "Enable full access for admin settings" ON public.app_settings;
 
 CREATE POLICY "Enable read for public settings"
 ON public.app_settings FOR SELECT TO anon USING (true);
 
+-- Relaxed policy to prevent lockout: Allow ANY authenticated user to edit settings
+-- (Assuming only admins can login via Supabase Auth in this context)
 CREATE POLICY "Enable full access for admin settings"
 ON public.app_settings FOR ALL TO authenticated
 USING (true)
 WITH CHECK (true);
 
--- Insert default setting if not exists
 INSERT INTO public.app_settings (key, value)
 VALUES ('registration_status', '"open"')
 ON CONFLICT (key) DO NOTHING;
@@ -119,37 +146,9 @@ VALUES ('school_profile', '{"nama_sekolah": "SD INPRES LELINGLUAN", "alamat": "J
 ON CONFLICT (key) DO NOTHING;
 
 
--- 2. Admin Profiles (To list committee members)
-CREATE TABLE IF NOT EXISTS public.admin_profiles (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-    email TEXT NOT NULL UNIQUE,
-    nama TEXT
-);
-
-ALTER TABLE public.admin_profiles ENABLE ROW LEVEL SECURITY;
-
--- Policy: Only Admins can view/manage this table
-DROP POLICY IF EXISTS "Enable full access for admin profiles" ON public.admin_profiles;
-
--- BOOTSTRAPPING: Allow any authenticated user to SELECT and INSERT initially
-CREATE POLICY "Enable select for authenticated profiles"
-ON public.admin_profiles FOR SELECT TO authenticated USING (true);
-
-CREATE POLICY "Enable write for admin profiles"
-ON public.admin_profiles FOR INSERT TO authenticated
-WITH CHECK (true);
-
-CREATE POLICY "Enable update delete for admin profiles"
-ON public.admin_profiles FOR UPDATE TO authenticated
-USING (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles));
-
-CREATE POLICY "Enable delete for admin profiles"
-ON public.admin_profiles FOR DELETE TO authenticated
-USING (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles));
-
-
--- 3. Form Fields (For Dynamic Form Builder)
+-- ==========================================
+-- 4. FORM FIELDS
+-- ==========================================
 CREATE TABLE IF NOT EXISTS public.form_fields (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
@@ -200,7 +199,9 @@ BEGIN
 END $$;
 
 
--- 4. Announcements
+-- ==========================================
+-- 5. ANNOUNCEMENTS
+-- ==========================================
 CREATE TABLE IF NOT EXISTS public.announcements (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
@@ -223,7 +224,9 @@ USING (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles))
 WITH CHECK (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles));
 
 
--- 5. Audit Logs
+-- ==========================================
+-- 6. AUDIT LOGS
+-- ==========================================
 CREATE TABLE IF NOT EXISTS public.audit_logs (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
@@ -243,7 +246,9 @@ USING (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles))
 WITH CHECK (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles));
 
 
--- 6. FAQs
+-- ==========================================
+-- 7. FAQS
+-- ==========================================
 CREATE TABLE IF NOT EXISTS public.faqs (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
@@ -263,7 +268,9 @@ USING (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles))
 WITH CHECK (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles));
 
 
--- 7. Gallery
+-- ==========================================
+-- 8. GALLERY
+-- ==========================================
 CREATE TABLE IF NOT EXISTS public.school_gallery (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
@@ -281,7 +288,10 @@ CREATE POLICY "Enable full access for admin gallery" ON public.school_gallery FO
 USING (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles))
 WITH CHECK (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles));
 
--- 8. Landing Page Content
+
+-- ==========================================
+-- 9. LANDING PAGE CONTENT
+-- ==========================================
 CREATE TABLE IF NOT EXISTS public.landing_page_content (
     key TEXT PRIMARY KEY,
     value JSONB NOT NULL
@@ -293,6 +303,8 @@ DROP POLICY IF EXISTS "Enable read for public landing content" ON public.landing
 DROP POLICY IF EXISTS "Enable full access for admin landing content" ON public.landing_page_content;
 
 CREATE POLICY "Enable read for public landing content" ON public.landing_page_content FOR SELECT TO anon USING (true);
+
+-- Relaxed policy: Allow any authenticated user (Admin) to edit content
 CREATE POLICY "Enable full access for admin landing content" ON public.landing_page_content FOR ALL TO authenticated
 USING (true)
 WITH CHECK (true);
@@ -357,7 +369,9 @@ USING (bucket_id = 'gallery_images')
 WITH CHECK (bucket_id = 'gallery_images');
 
 
--- SECURE FUNCTIONS
+-- ==========================================
+-- FUNCTIONS
+-- ==========================================
 CREATE OR REPLACE FUNCTION get_status_siswa(search_nik TEXT)
 RETURNS TABLE (
   nama_lengkap TEXT,
