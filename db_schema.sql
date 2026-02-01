@@ -92,8 +92,8 @@ ON public.app_settings FOR SELECT TO anon USING (true);
 
 CREATE POLICY "Enable full access for admin settings"
 ON public.app_settings FOR ALL TO authenticated
-USING (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles))
-WITH CHECK (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles));
+USING (true)
+WITH CHECK (true);
 
 -- Insert default setting if not exists
 INSERT INTO public.app_settings (key, value)
@@ -296,8 +296,8 @@ DROP POLICY IF EXISTS "Enable full access for admin landing content" ON public.l
 
 CREATE POLICY "Enable read for public landing content" ON public.landing_page_content FOR SELECT TO anon USING (true);
 CREATE POLICY "Enable full access for admin landing content" ON public.landing_page_content FOR ALL TO authenticated
-USING (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles))
-WITH CHECK (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles));
+USING (true)
+WITH CHECK (true);
 
 -- Seed Default Landing Content
 INSERT INTO public.landing_page_content (key, value)
