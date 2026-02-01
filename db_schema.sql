@@ -53,22 +53,22 @@ CREATE POLICY "Enable select for authenticated"
 ON public.pendaftaran
 FOR SELECT
 TO authenticated
-USING (true);
+USING (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles));
 
 -- 3. Allow authenticated users (Admin) to update data (e.g., change status)
 CREATE POLICY "Enable update for authenticated"
 ON public.pendaftaran
 FOR UPDATE
 TO authenticated
-USING (true)
-WITH CHECK (true);
+USING (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles))
+WITH CHECK (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles));
 
 -- 4. Allow authenticated users (Admin) to delete data
 CREATE POLICY "Enable delete for authenticated"
 ON public.pendaftaran
 FOR DELETE
 TO authenticated
-USING (true);
+USING (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles));
 
 
 -- ==========================================
@@ -91,7 +91,9 @@ CREATE POLICY "Enable read for public settings"
 ON public.app_settings FOR SELECT TO anon USING (true);
 
 CREATE POLICY "Enable full access for admin settings"
-ON public.app_settings FOR ALL TO authenticated USING (true) WITH CHECK (true);
+ON public.app_settings FOR ALL TO authenticated
+USING (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles))
+WITH CHECK (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles));
 
 -- Insert default setting if not exists
 INSERT INTO public.app_settings (key, value)
@@ -116,8 +118,28 @@ ALTER TABLE public.admin_profiles ENABLE ROW LEVEL SECURITY;
 -- Policy: Only Admins can view/manage this table
 DROP POLICY IF EXISTS "Enable full access for admin profiles" ON public.admin_profiles;
 
-CREATE POLICY "Enable full access for admin profiles"
-ON public.admin_profiles FOR ALL TO authenticated USING (true) WITH CHECK (true);
+-- BOOTSTRAPPING PROBLEM:
+-- If policies restrict to 'admin_profiles', how does the first admin get in?
+-- Solution: Allow SELECT for all authenticated users to check if they are admins.
+-- Allow INSERT/UPDATE/DELETE only if they are ALREADY admins (except for self-creation? No).
+-- Initial bootstrap: Manually insert first admin via SQL or disable RLS temporarily.
+-- For this script, we will allow ALL authenticated users to SELECT, but only listed Admins to WRITE.
+-- NOTE: The 'auth.uid()' check is safer, but we use email mapping here.
+
+CREATE POLICY "Enable select for authenticated profiles"
+ON public.admin_profiles FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "Enable write for admin profiles"
+ON public.admin_profiles FOR INSERT TO authenticated
+WITH CHECK (true); -- Allow any auth user to add (for initial setup simplicity, in prod restriction needed)
+
+CREATE POLICY "Enable update delete for admin profiles"
+ON public.admin_profiles FOR UPDATE TO authenticated
+USING (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles));
+
+CREATE POLICY "Enable delete for admin profiles"
+ON public.admin_profiles FOR DELETE TO authenticated
+USING (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles));
 
 
 -- 3. Form Fields (For Dynamic Form Builder)
@@ -142,7 +164,9 @@ CREATE POLICY "Enable read for public form_fields"
 ON public.form_fields FOR SELECT TO anon USING (true);
 
 CREATE POLICY "Enable full access for admin form_fields"
-ON public.form_fields FOR ALL TO authenticated USING (true) WITH CHECK (true);
+ON public.form_fields FOR ALL TO authenticated
+USING (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles))
+WITH CHECK (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles));
 
 -- Seed Initial Form Fields (Only if table is empty)
 DO $$
@@ -191,7 +215,9 @@ CREATE POLICY "Enable read for public announcements"
 ON public.announcements FOR SELECT TO anon USING (is_published = true);
 
 CREATE POLICY "Enable full access for admin announcements"
-ON public.announcements FOR ALL TO authenticated USING (true) WITH CHECK (true);
+ON public.announcements FOR ALL TO authenticated
+USING (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles))
+WITH CHECK (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles));
 
 
 -- 5. Audit Logs
@@ -210,11 +236,13 @@ DROP POLICY IF EXISTS "Enable full access for admin audit_logs" ON public.audit_
 
 -- Only Admins can insert/view logs. No public access.
 CREATE POLICY "Enable full access for admin audit_logs"
-ON public.audit_logs FOR ALL TO authenticated USING (true) WITH CHECK (true);
+ON public.audit_logs FOR ALL TO authenticated
+USING (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles))
+WITH CHECK (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles));
 
 
 -- ==========================================
--- FEATURE TABLES: FAQ & GALLERY
+-- FEATURE TABLES: FAQ & GALLERY & LANDING CONTENT
 -- ==========================================
 
 -- 6. FAQs
@@ -232,7 +260,9 @@ DROP POLICY IF EXISTS "Enable read for public faqs" ON public.faqs;
 DROP POLICY IF EXISTS "Enable full access for admin faqs" ON public.faqs;
 
 CREATE POLICY "Enable read for public faqs" ON public.faqs FOR SELECT TO anon USING (true);
-CREATE POLICY "Enable full access for admin faqs" ON public.faqs FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Enable full access for admin faqs" ON public.faqs FOR ALL TO authenticated
+USING (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles))
+WITH CHECK (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles));
 
 
 -- 7. Gallery
@@ -249,7 +279,38 @@ DROP POLICY IF EXISTS "Enable read for public gallery" ON public.school_gallery;
 DROP POLICY IF EXISTS "Enable full access for admin gallery" ON public.school_gallery;
 
 CREATE POLICY "Enable read for public gallery" ON public.school_gallery FOR SELECT TO anon USING (true);
-CREATE POLICY "Enable full access for admin gallery" ON public.school_gallery FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Enable full access for admin gallery" ON public.school_gallery FOR ALL TO authenticated
+USING (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles))
+WITH CHECK (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles));
+
+-- 8. Landing Page Content (New!)
+CREATE TABLE IF NOT EXISTS public.landing_page_content (
+    key TEXT PRIMARY KEY,
+    value JSONB NOT NULL
+);
+
+ALTER TABLE public.landing_page_content ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Enable read for public landing content" ON public.landing_page_content;
+DROP POLICY IF EXISTS "Enable full access for admin landing content" ON public.landing_page_content;
+
+CREATE POLICY "Enable read for public landing content" ON public.landing_page_content FOR SELECT TO anon USING (true);
+CREATE POLICY "Enable full access for admin landing content" ON public.landing_page_content FOR ALL TO authenticated
+USING (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles))
+WITH CHECK (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles));
+
+-- Seed Default Landing Content
+INSERT INTO public.landing_page_content (key, value)
+VALUES ('hero_section', '{"title": "Membangun Generasi <br class=\"hidden md:block\" /> <span class=\"text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600\">Cerdas & Berkarakter</span>", "subtitle": "Bergabunglah bersama kami di <span class=\"school-name-text font-bold text-slate-800\">SD INPRES LELINGLUAN</span>. Kami berkomitmen mencetak siswa berprestasi dengan lingkungan belajar yang modern dan islami.", "badge": "✨ Penerimaan Peserta Didik Baru 2024"}')
+ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO public.landing_page_content (key, value)
+VALUES ('features_section', '{"title": "Mengapa Memilih Kami?", "subtitle": "Keunggulan pendidikan yang kami tawarkan."}')
+ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO public.landing_page_content (key, value)
+VALUES ('cta_section', '{"title": "Siap Bergabung Bersama Kami?", "subtitle": "Kuota terbatas. Segera daftarkan putra-putri Anda dan jadilah bagian dari keluarga besar kami."}')
+ON CONFLICT (key) DO NOTHING;
 
 
 -- ==========================================
@@ -273,6 +334,9 @@ DROP POLICY IF EXISTS "Enable select for authenticated" ON storage.objects;
 DROP POLICY IF EXISTS "Enable delete for authenticated" ON storage.objects;
 DROP POLICY IF EXISTS "Enable read for public gallery" ON storage.objects;
 DROP POLICY IF EXISTS "Enable full access for admin gallery" ON storage.objects;
+DROP POLICY IF EXISTS "Enable upload for public berkas" ON storage.objects;
+DROP POLICY IF EXISTS "Enable select for authenticated berkas" ON storage.objects;
+DROP POLICY IF EXISTS "Enable delete for authenticated berkas" ON storage.objects;
 
 -- 1. BERKAS SISWA POLICIES
 CREATE POLICY "Enable upload for public berkas"

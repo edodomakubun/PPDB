@@ -34,41 +34,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // 3. Load School Profile (Dynamic)
-    try {
-        const { data, error } = await supabaseClient
-            .from('app_settings')
-            .select('value')
-            .eq('key', 'school_profile')
-            .single();
-
-        if (data && data.value) {
-            const profile = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
-
-            // Update Text
-            if (profile.nama_sekolah) {
-                document.title = `PPDB - ${profile.nama_sekolah}`;
-                document.querySelectorAll('.school-name-text').forEach(el => el.innerText = profile.nama_sekolah);
-                const navName = document.getElementById('nav-school-name');
-                if (navName) navName.innerText = profile.nama_sekolah;
-            }
-
-            if (profile.alamat) {
-                document.querySelectorAll('.school-address-text').forEach(el => el.innerText = profile.alamat);
-            }
-
-            // Update Logo if exists
-            if (profile.logo_url) {
-                const logoContainer = document.getElementById('nav-logo-container');
-                if (logoContainer) {
-                    logoContainer.innerHTML = `<img src="${profile.logo_url}" alt="Logo" class="w-full h-full object-cover rounded-xl">`;
-                    logoContainer.classList.remove('bg-gradient-to-br'); // Remove default background
-                }
-            }
-        }
-    } catch (err) {
-        console.warn('Gagal memuat profil sekolah:', err);
-    }
+    // 3. Load School Profile & Landing Content (Dynamic)
+    loadDynamicContent();
 
     // 4. Load Gallery & FAQ
     loadGalleryPublic();
@@ -140,6 +107,83 @@ async function loadGalleryPublic() {
         }
     } else {
         container.innerHTML = '<div class="col-span-full text-center text-slate-400">Belum ada foto galeri.</div>';
+    }
+}
+
+async function loadDynamicContent() {
+    try {
+        // Fetch School Profile & Landing Content
+        const [profileRes, landingRes] = await Promise.all([
+            supabaseClient.from('app_settings').select('value').eq('key', 'school_profile').single(),
+            supabaseClient.from('landing_page_content').select('*')
+        ]);
+
+        // 1. School Profile
+        if (profileRes.data && profileRes.data.value) {
+            const profile = typeof profileRes.data.value === 'string' ? JSON.parse(profileRes.data.value) : profileRes.data.value;
+
+            if (profile.nama_sekolah) {
+                document.title = `PPDB - ${profile.nama_sekolah}`;
+                document.querySelectorAll('.school-name-text').forEach(el => el.innerText = profile.nama_sekolah);
+                const navName = document.getElementById('nav-school-name');
+                if (navName) navName.innerText = profile.nama_sekolah;
+            }
+            if (profile.alamat) {
+                document.querySelectorAll('.school-address-text').forEach(el => el.innerText = profile.alamat);
+            }
+            if (profile.logo_url) {
+                const logoContainer = document.getElementById('nav-logo-container');
+                if (logoContainer) {
+                    logoContainer.innerHTML = `<img src="${profile.logo_url}" alt="Logo" class="w-full h-full object-cover rounded-xl">`;
+                    logoContainer.classList.remove('bg-gradient-to-br');
+                }
+            }
+        }
+
+        // 2. Landing Content
+        if (landingRes.data) {
+            const content = {};
+            landingRes.data.forEach(item => content[item.key] = item.value);
+
+            // Hero
+            if (content.hero_section) {
+                const hero = content.hero_section;
+                if (hero.badge) {
+                    const badgeEl = document.getElementById('hero-badge-text');
+                    if (badgeEl) badgeEl.innerText = hero.badge;
+                }
+                if (hero.title) {
+                    const titleEl = document.getElementById('hero-title-text');
+                    if (titleEl) titleEl.innerHTML = hero.title;
+                }
+                if (hero.subtitle) {
+                    const subEl = document.getElementById('hero-subtitle-text');
+                    if (subEl) subEl.innerHTML = hero.subtitle;
+                }
+            }
+
+            // Features Header
+            if (content.features_section && content.features_section.title) {
+                const fTitle = document.getElementById('features-title-text');
+                if (fTitle) fTitle.innerText = content.features_section.title;
+            }
+
+            // CTA
+            if (content.cta_section) {
+                const cta = content.cta_section;
+                if (cta.title) {
+                    const ctaT = document.getElementById('cta-title-text');
+                    if (ctaT) ctaT.innerText = cta.title;
+                }
+                if (cta.subtitle) {
+                    const ctaS = document.getElementById('cta-subtitle-text');
+                    if (ctaS) ctaS.innerText = cta.subtitle;
+                }
+            }
+        }
+
+    } catch (err) {
+        console.warn('Gagal memuat konten dinamis:', err);
     }
 }
 
