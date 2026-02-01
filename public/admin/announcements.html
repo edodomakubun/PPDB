@@ -200,17 +200,13 @@
                     ? '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Published</span>'
                     : '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">Draft</span>';
 
-                // Escape simple quotes for onclick
-                const safeTitle = item.title.replace(/'/g, "\\'");
-                const safeContent = item.content.replace(/'/g, "\\'").replace(/\n/g, "\\n");
-
                 const row = `
                     <tr class="hover:bg-slate-50">
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${date}</td>
                         <td class="px-6 py-4 text-sm text-slate-900 font-medium">${item.title}</td>
                         <td class="px-6 py-4 whitespace-nowrap">${statusBadge}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <button onclick="editNews('${item.id}', '${safeTitle}', '${safeContent}', ${item.is_published})" class="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
+                            <button onclick="editNews('${item.id}')" class="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
                             <button onclick="deleteNews('${item.id}')" class="text-red-600 hover:text-red-900">Hapus</button>
                         </td>
                     </tr>
@@ -235,18 +231,16 @@
             document.getElementById('modal-news').classList.add('hidden');
         }
 
-        function editNews(id, title, content, published) {
+        function editNews(id) {
             document.getElementById('modal-news').classList.remove('hidden');
             document.getElementById('modal-title').innerText = 'Edit Pengumuman';
+            document.getElementById('form-news').reset(); // Clear previous
             document.getElementById('news-id').value = id;
-            document.getElementById('news-title').value = title;
+            quill.root.innerHTML = 'Loading...';
 
-            // Fix unescaped newlines or quotes in content passing
-            // Better to fetch content by ID to be safe, but for now relying on passed args
-            // Note: content passed here is heavily escaped in renderTable
-            // We need to decode it back if it was escaped for JS string safety.
-            // Or better: fetch single record.
-            // Let's implement fetch single to be robust against rich text complexity.
+            // Reset source view if active
+            if(isSourceView) toggleSourceView();
+
             fetchSingleNews(id);
         }
 
