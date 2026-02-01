@@ -4,74 +4,102 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cek Status Pendaftaran - SD INPRES LELINGLUAN</title>
-    <!-- Tailwind CSS v4 -->
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
-    <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        /* Background & Animation */
+        .bg-grid-slate { background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='%23cbd5e1' stroke-opacity='0.3'%3e%3cpath d='M0 .5H31.5V32'/%3e%3c/svg%3e"); }
+        .blob { position: absolute; filter: blur(4rem); z-index: -1; opacity: 0.5; mix-blend-mode: multiply; will-change: transform; transform: translateZ(0); }
+        .animate-float { animation: float 10s ease-in-out infinite; }
+        @keyframes float { 0% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-20px) rotate(2deg); } 100% { transform: translateY(0px) rotate(0deg); } }
+        .fade-in-up { animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(20px); }
+        @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+<body class="bg-slate-50 text-slate-800 antialiased bg-grid-slate min-h-screen flex flex-col relative overflow-x-hidden selection:bg-blue-500 selection:text-white">
 
-    <!-- Navigation -->
-    <nav class="fixed w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
+    <div class="fixed inset-0 pointer-events-none">
+        <div class="blob bg-blue-200 w-[30rem] h-[30rem] rounded-full top-0 left-0 -translate-x-1/2 -translate-y-1/2 animate-float"></div>
+        <div class="blob bg-indigo-200 w-[25rem] h-[25rem] rounded-full bottom-0 right-0 translate-x-1/3 translate-y-1/3 animate-float" style="animation-delay: -3s;"></div>
+    </div>
+
+    <nav class="fixed w-full z-50 bg-white/70 backdrop-blur-xl border-b border-white/20 shadow-sm transition-all duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <a href="index.html" class="flex-shrink-0 flex items-center gap-2">
-                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">SD</div>
-                    <span class="font-bold text-xl tracking-tight text-blue-900">SD INPRES LELINGLUAN</span>
+            <div class="flex justify-between h-20 items-center">
+                <a href="index.html" class="flex items-center gap-3 group">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center text-white font-bold shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">SD</div>
+                    <div class="flex flex-col">
+                        <span class="font-bold text-lg text-slate-900 leading-tight group-hover:text-blue-700 transition-colors">SD INPRES LELINGLUAN</span>
+                        <span class="text-[10px] uppercase tracking-wider text-blue-600 font-bold">PPDB Online</span>
+                    </div>
                 </a>
-                <div class="flex items-center gap-4">
-                    <a href="index.html" class="text-slate-600 hover:text-blue-600 font-medium text-sm">Kembali ke Beranda</a>
-                </div>
+                <a href="index.html" class="text-sm font-semibold text-slate-500 hover:text-blue-600 transition flex items-center gap-2 px-4 py-2 hover:bg-slate-50 rounded-lg">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    Kembali ke Beranda
+                </a>
             </div>
         </div>
     </nav>
 
-    <!-- Main Content -->
-    <main class="flex-grow pt-28 pb-20 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-md mx-auto">
+    <main class="flex-grow flex flex-col justify-center items-center pt-32 pb-20 px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="w-full max-w-lg">
 
-            <div class="text-center mb-10">
-                <h1 class="text-3xl font-extrabold text-slate-900 mb-2">Cek Status Kelulusan</h1>
-                <p class="text-slate-600">Masukkan NIK atau Kode Pendaftaran Anda untuk melihat hasil seleksi.</p>
+            <div class="text-center mb-10 fade-in-up">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl mb-6 shadow-sm">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <h1 class="text-3xl md:text-4xl font-black text-slate-900 mb-3 tracking-tight">Cek Status Kelulusan</h1>
+                <p class="text-slate-600 text-lg">Masukkan NIK calon siswa untuk melihat hasil seleksi PPDB.</p>
             </div>
 
-            <!-- Search Form -->
-            <div class="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 mb-8">
-                <form id="form-cek" class="space-y-4">
+            <div class="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl shadow-blue-500/10 border border-white/60 p-8 mb-8 fade-in-up" style="animation-delay: 100ms;">
+                <form id="form-cek" class="space-y-6">
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">NIK Siswa</label>
-                        <input type="text" id="nik-input" required class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-center text-lg tracking-wide font-mono placeholder:font-sans" placeholder="Masukkan 16 digit NIK">
+                        <label class="block text-sm font-bold text-slate-700 mb-2 ml-1">Nomor Induk Kependudukan (NIK)</label>
+                        <div class="relative group">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0c0 .884-.896 1.75-2.162 2.146-.436.137-.976.248-1.57.322M15 11h3m-3 4h2"></path></svg>
+                            </div>
+                            <input type="text" id="nik-input" required 
+                                class="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-lg tracking-wider font-mono placeholder:font-sans placeholder:tracking-normal text-slate-900 font-bold shadow-inner" 
+                                placeholder="Masukkan 16 digit NIK" maxlength="16" inputmode="numeric">
+                        </div>
                     </div>
-                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-xl transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                    <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition-all transform hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-2 text-lg">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                        Cek Status
+                        Lihat Hasil Seleksi
                     </button>
                 </form>
             </div>
 
-            <!-- Result Area -->
-            <div id="result-area" class="hidden">
-                <!-- Content injected via JS -->
+            <div id="result-area" class="hidden transform transition-all duration-500 ease-out">
+                <div class="bg-white rounded-3xl p-8 border border-slate-200 shadow-lg text-center">
+                    <div class="animate-pulse flex flex-col items-center">
+                        <div class="h-12 w-12 bg-slate-200 rounded-full mb-4"></div>
+                        <div class="h-4 w-3/4 bg-slate-200 rounded mb-2"></div>
+                        <div class="h-4 w-1/2 bg-slate-200 rounded"></div>
+                    </div>
+                 </div>
             </div>
 
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="bg-slate-900 text-slate-300 py-8 text-center mt-auto">
+    <footer class="bg-white border-t border-slate-200 py-8 text-center mt-auto relative z-10">
         <div class="max-w-7xl mx-auto px-4">
-            <p>&copy; 2024 SD Inpres Lelingluan. All rights reserved.</p>
+            <p class="text-sm text-slate-400 font-medium">&copy; 2025 SD Inpres Lelingluan. Develop with ❤️ by Edward Domakubun</p>
         </div>
     </footer>
 
-    <!-- Scripts -->
     <script src="js/config.js"></script>
     <script src="js/cek-status.js"></script>
 </body>
