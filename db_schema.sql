@@ -341,6 +341,10 @@ CREATE POLICY "Enable upload for public berkas"
 ON storage.objects FOR INSERT TO anon
 WITH CHECK (bucket_id = 'berkas_siswa');
 
+CREATE POLICY "Enable upload for authenticated berkas"
+ON storage.objects FOR INSERT TO authenticated
+WITH CHECK (bucket_id = 'berkas_siswa');
+
 CREATE POLICY "Enable select for authenticated berkas"
 ON storage.objects FOR SELECT TO authenticated
 USING (bucket_id = 'berkas_siswa');
