@@ -22,6 +22,14 @@ CREATE TABLE IF NOT EXISTS public.pendaftaran (
     custom_data JSONB DEFAULT '{}'::JSONB
 );
 
+-- Ensure custom_data exists (if table already created)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'pendaftaran' AND column_name = 'custom_data') THEN
+        ALTER TABLE public.pendaftaran ADD COLUMN custom_data JSONB DEFAULT '{}'::JSONB;
+    END IF;
+END $$;
+
 -- Enable Row Level Security (RLS)
 ALTER TABLE public.pendaftaran ENABLE ROW LEVEL SECURITY;
 
