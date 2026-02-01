@@ -83,6 +83,11 @@ CREATE POLICY "Enable insert for public"
 ON public.pendaftaran FOR INSERT TO anon
 WITH CHECK (true);
 
+-- 1b. Allow Admins (authenticated) to insert data (Manual Entry)
+CREATE POLICY "Enable insert for authenticated"
+ON public.pendaftaran FOR INSERT TO authenticated
+WITH CHECK (auth.jwt()->>'email' IN (SELECT email FROM admin_profiles));
+
 -- 2. Allow Admins to view all data
 CREATE POLICY "Enable select for authenticated"
 ON public.pendaftaran FOR SELECT TO authenticated

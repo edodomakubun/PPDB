@@ -4,87 +4,51 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login Panitia - SD INPRES LELINGLUAN</title>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    
+    <!-- Tailwind CSS v4 -->
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        
-        /* Background Animations (Sama dengan Index) */
-        .blob { 
-            position: absolute; 
-            filter: blur(4rem); 
-            z-index: -1; 
-            opacity: 0.5; 
-            mix-blend-mode: multiply;
-            will-change: transform;
-            transform: translateZ(0);
-        }
-        .animate-float { animation: float 10s ease-in-out infinite; }
-        @keyframes float { 
-            0% { transform: translateY(0px) rotate(0deg); } 
-            50% { transform: translateY(-20px) rotate(2deg); } 
-            100% { transform: translateY(0px) rotate(0deg); } 
-        }
-
-        /* Grid Pattern */
-        .bg-grid-slate { background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='%23cbd5e1' stroke-opacity='0.3'%3e%3cpath d='M0 .5H31.5V32'/%3e%3c/svg%3e"); }
-        
-        /* Card Animation */
-        .fade-in-up { animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(20px); }
-        @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+        body { font-family: 'Inter', sans-serif; }
     </style>
 </head>
-<body class="bg-slate-50 bg-grid-slate h-screen flex items-center justify-center antialiased relative overflow-hidden selection:bg-blue-500 selection:text-white">
+<body class="bg-slate-100 h-screen flex items-center justify-center antialiased">
 
-    <div class="blob bg-blue-300 w-[30rem] h-[30rem] rounded-full top-0 left-0 -translate-x-1/2 -translate-y-1/2 animate-float"></div>
-    <div class="blob bg-indigo-300 w-[25rem] h-[25rem] rounded-full bottom-0 right-0 translate-x-1/3 translate-y-1/3 animate-float" style="animation-delay: -3s;"></div>
-
-    <div class="w-full max-w-md p-6 relative z-10 fade-in-up">
-        <div class="bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-2xl shadow-blue-500/10 border border-white/50 overflow-hidden">
-            <div class="p-10">
-                <div class="text-center mb-10">
-                    <div class="w-14 h-14 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center text-white font-extrabold text-2xl mx-auto mb-6 shadow-lg shadow-blue-500/30 ring-4 ring-blue-50">SD</div>
-                    
-                    <h1 class="text-3xl font-black text-slate-900 tracking-tight mb-2">Login Panitia</h1>
-                    <p class="text-slate-500 text-sm font-medium">Masuk untuk mengelola pendaftaran PPDB.</p>
+    <div class="w-full max-w-md p-6">
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+            <div class="p-8">
+                <div class="text-center mb-8">
+                    <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl mx-auto mb-4">SD</div>
+                    <h1 class="text-2xl font-bold text-slate-900">Login Panitia</h1>
+                    <p class="text-slate-500 text-sm">Masuk untuk mengelola pendaftaran.</p>
                 </div>
 
                 <form id="form-login" class="space-y-6">
                     <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-2 ml-1">Email Sekolah</label>
-                        <input type="email" name="email" required 
-                            class="w-full px-5 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400 text-slate-800 font-medium" 
-                            placeholder="admin@sekolah.id">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                        <input type="email" name="email" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="admin@sekolah.id">
                     </div>
                     <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-2 ml-1">Kata Sandi</label>
-                        <input type="password" name="password" required 
-                            class="w-full px-5 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400 text-slate-800 font-medium" 
-                            placeholder="••••••••">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                        <input type="password" name="password" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="••••••••">
                     </div>
 
-                    <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition-all transform hover:-translate-y-0.5 active:scale-95">
-                        Masuk ke Dashboard
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-md hover:shadow-lg transition transform hover:-translate-y-0.5">
+                        Masuk
                     </button>
                 </form>
             </div>
-            
-            <div class="bg-slate-50/80 px-8 py-5 border-t border-slate-100 text-center backdrop-blur-sm">
-                <a href="index.html" class="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-blue-600 font-semibold transition group">
-                    <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                    Kembali ke Website Utama
-                </a>
+            <div class="bg-slate-50 px-8 py-4 border-t border-slate-100 text-center">
+                <a href="index.html" class="text-sm text-slate-500 hover:text-blue-600 font-medium">Kembali ke Website Utama</a>
             </div>
         </div>
     </div>
 
+    <!-- Scripts -->
     <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
 </body>

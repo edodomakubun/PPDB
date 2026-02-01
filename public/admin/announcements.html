@@ -4,153 +4,116 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kelola Pengumuman - SD INPRES LELINGLUAN</title>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
+    <!-- Tailwind CSS v4 -->
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Quill Rich Text Editor -->
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        
-        /* Background & Animation */
-        .bg-grid-slate { background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='%23cbd5e1' stroke-opacity='0.3'%3e%3cpath d='M0 .5H31.5V32'/%3e%3c/svg%3e"); }
-        .blob { position: absolute; filter: blur(4rem); z-index: -1; opacity: 0.5; mix-blend-mode: multiply; will-change: transform; transform: translateZ(0); }
-        .animate-float { animation: float 10s ease-in-out infinite; }
-        @keyframes float { 0% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-20px) rotate(2deg); } 100% { transform: translateY(0px) rotate(0deg); } }
-        .fade-in { animation: fadeIn 0.6s ease-out forwards; opacity: 0; }
-        @keyframes fadeIn { to { opacity: 1; } }
-
-        /* Quill Editor Customization to match theme */
-        .ql-toolbar.ql-snow { border-top-left-radius: 0.75rem; border-top-right-radius: 0.75rem; border-color: #cbd5e1; background-color: #f8fafc; }
-        .ql-container.ql-snow { border-bottom-left-radius: 0.75rem; border-bottom-right-radius: 0.75rem; border-color: #cbd5e1; background-color: white; }
-    </style>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Inter', sans-serif; }</style>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased bg-grid-slate min-h-screen relative overflow-x-hidden">
+<body class="bg-slate-50 text-slate-800 antialiased">
 
-    <div class="fixed inset-0 pointer-events-none">
-        <div class="blob bg-purple-200 w-[30rem] h-[30rem] rounded-full top-0 left-0 -translate-x-1/2 -translate-y-1/2 animate-float"></div>
-        <div class="blob bg-blue-200 w-[25rem] h-[25rem] rounded-full bottom-0 right-0 translate-x-1/3 translate-y-1/3 animate-float" style="animation-delay: -3s;"></div>
-    </div>
-
-    <nav class="bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-sm sticky top-0 z-40 transition-all duration-300">
+    <!-- Navbar -->
+    <nav class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-20">
+            <div class="flex justify-between h-16">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center text-white font-bold shadow-md shadow-blue-500/20">SD</div>
-                    <div class="flex flex-col">
-                        <span class="font-bold text-lg text-slate-900 leading-tight">Panel Panitia</span>
-                        <span class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Administrator Area</span>
-                    </div>
+                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">SD</div>
+                    <span class="font-bold text-lg text-slate-900">Panel Panitia</span>
                 </div>
-                <div class="flex items-center gap-6">
-                    <span id="user-email" class="text-sm font-medium text-slate-500 hidden sm:block bg-slate-100 px-3 py-1 rounded-full border border-slate-200"></span>
-                    <div class="h-6 w-px bg-slate-200 hidden sm:block"></div>
-                    <a href="dashboard.html" class="text-sm font-semibold text-slate-600 hover:text-blue-600 transition flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                        Dashboard
-                    </a>
-                    <button id="btn-logout" class="text-sm font-semibold text-red-600 hover:text-red-700 transition bg-red-50 hover:bg-red-100 px-4 py-2 rounded-lg border border-red-100">
-                        Logout
-                    </button>
+                <div class="flex items-center gap-4">
+                    <span id="user-email" class="text-sm text-slate-500 hidden sm:block"></span>
+                    <a href="dashboard.html" class="text-sm font-medium text-slate-600 hover:text-blue-600 transition">Dashboard</a>
+                    <button id="btn-logout" class="text-sm font-medium text-red-600 hover:text-red-700 transition">Logout</button>
                 </div>
             </div>
         </div>
     </nav>
 
-    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 fade-in">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8">
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-8 flex justify-between items-center">
             <div>
-                <a href="dashboard.html" class="text-slate-500 hover:text-blue-600 text-sm mb-3 inline-flex items-center font-medium transition-colors">
+                <a href="dashboard.html" class="text-slate-500 hover:text-blue-600 text-sm mb-2 inline-flex items-center">
                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                     Kembali ke Dashboard
                 </a>
-                <h1 class="text-3xl font-black text-slate-900 tracking-tight">Kelola Pengumuman</h1>
-                <p class="text-slate-500 mt-1">Buat, edit, dan publikasikan berita terbaru untuk halaman website sekolah.</p>
+                <h1 class="text-2xl font-bold text-slate-900">Kelola Pengumuman</h1>
+                <p class="text-slate-500">Buat dan kelola berita atau informasi untuk halaman publik.</p>
             </div>
-            <button onclick="openModal()" class="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-blue-500/30 transition-all hover:-translate-y-0.5 flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                Buat Pengumuman
+            <button onclick="openModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-sm transition">
+                + Buat Pengumuman
             </button>
         </div>
 
-        <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-slate-100">
-                    <thead class="bg-slate-50/80">
+                <table class="min-w-full divide-y divide-slate-200">
+                    <thead class="bg-slate-50">
                         <tr>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Tanggal</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Judul Pengumuman</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                            <th class="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Aksi</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Tanggal</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Judul</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody id="news-body" class="bg-white divide-y divide-slate-100">
-                        <tr><td colspan="4" class="px-6 py-12 text-center text-slate-400 flex flex-col items-center"><svg class="animate-spin h-6 w-6 text-blue-500 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Memuat data...</td></tr>
+                    <tbody id="news-body" class="bg-white divide-y divide-slate-200">
+                        <tr><td colspan="4" class="px-6 py-8 text-center text-slate-500">Memuat data...</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
     </main>
 
+    <!-- Modal -->
     <div id="modal-news" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeModal()"></div>
 
+        <!-- Modal Panel Container -->
         <div class="fixed inset-0 z-50 overflow-y-auto">
             <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-                <div class="relative transform rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl border border-slate-100">
-                    <div class="bg-white px-6 pb-6 pt-6 sm:p-8 rounded-t-2xl">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-xl font-bold leading-6 text-slate-900" id="modal-title">Buat Pengumuman Baru</h3>
-                            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 transition">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                            </button>
-                        </div>
-                        
-                        <form id="form-news" class="space-y-5">
+
+                <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl">
+                    <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                        <h3 class="text-lg font-bold leading-6 text-gray-900 mb-4" id="modal-title">Buat Pengumuman</h3>
+                        <form id="form-news" class="space-y-4">
                             <input type="hidden" id="news-id">
                             <div>
-                                <label class="block text-sm font-bold text-slate-700 mb-2">Judul Pengumuman</label>
-                                <input type="text" id="news-title" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition font-medium placeholder:text-slate-400" placeholder="Contoh: Jadwal Daftar Ulang PPDB">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Judul Pengumuman</label>
+                                <input type="text" id="news-title" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition">
                             </div>
-                            
                             <div>
-                                <div class="flex justify-between items-center mb-2">
-                                    <label class="block text-sm font-bold text-slate-700">Isi Konten</label>
-                                    <button type="button" onclick="toggleSourceView()" class="text-xs text-blue-600 hover:text-blue-700 hover:underline font-semibold flex items-center gap-1">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
-                                        Edit Source Code
-                                    </button>
-                                </div>
-
-                                <div class="relative rounded-xl overflow-hidden shadow-sm">
-                                    <div id="editor-container" class="h-64 font-sans text-base"></div>
-                                    <textarea id="source-editor" class="hidden w-full h-[calc(16rem+42px)] p-4 border border-slate-300 rounded-xl font-mono text-xs bg-slate-900 text-green-400 focus:outline-none resize-none leading-relaxed" placeholder=""></textarea>
-                                </div>
-                                <input type="hidden" id="news-content">
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="block text-sm font-medium text-gray-700">Isi Konten</label>
+                                <button type="button" onclick="toggleSourceView()" class="text-xs text-blue-600 hover:underline font-medium">
+                                    &lt;&gt; Edit Source Code
+                                </button>
                             </div>
-                            
-                            <div class="flex items-center p-4 bg-blue-50 rounded-xl border border-blue-100">
-                                <div class="flex items-center h-5">
-                                    <input type="checkbox" id="news-published" class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
-                                </div>
-                                <div class="ml-3 text-sm">
-                                    <label for="news-published" class="font-bold text-slate-800 cursor-pointer">Publikasikan Langsung</label>
-                                    <p class="text-slate-500 text-xs">Jika dicentang, pengumuman akan langsung tampil di website.</p>
-                                </div>
+
+                            <div class="bg-white relative">
+                                <div id="editor-container" class="h-64 border border-gray-300 rounded-b-lg"></div>
+                                <textarea id="source-editor" class="hidden w-full h-64 p-2 border border-gray-300 rounded-b-lg font-mono text-xs bg-slate-50 focus:outline-none" placeholder="<!-- Masukkan HTML Custom di sini -->"></textarea>
+                            </div>
+                            <input type="hidden" id="news-content">
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="news-published" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <label for="news-published" class="ml-2 block text-sm text-gray-900">Publikasikan Langsung</label>
                             </div>
                         </form>
                     </div>
-                    <div class="bg-slate-50 px-6 py-4 sm:flex sm:flex-row-reverse sm:px-8 gap-3 rounded-b-2xl border-t border-slate-100">
-                        <button type="button" onclick="saveNews()" class="inline-flex w-full justify-center rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-500/30 hover:bg-blue-700 hover:-translate-y-0.5 transition-all sm:w-auto">Simpan Data</button>
-                        <button type="button" onclick="closeModal()" class="mt-3 inline-flex w-full justify-center rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 sm:mt-0 sm:w-auto transition-colors">Batal</button>
+                    <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 gap-2">
+                        <button type="button" onclick="saveNews()" class="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 sm:w-auto">Simpan</button>
+                        <button type="button" onclick="closeModal()" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Batal</button>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
@@ -161,10 +124,10 @@
         let isSourceView = false;
 
         function toggleSourceView() {
-            const editorDiv = document.getElementById('editor-container').parentElement;
+            const editorDiv = document.getElementById('editor-container').parentElement; // Parent .bg-white
             const quillContainer = document.getElementById('editor-container');
             const sourceTextarea = document.getElementById('source-editor');
-            const toolbar = document.querySelector('.ql-toolbar');
+            const toolbar = editorDiv.querySelector('.ql-toolbar'); // Quill toolbar is sibling
 
             isSourceView = !isSourceView;
 
@@ -172,22 +135,21 @@
                 // Switch to Source
                 sourceTextarea.value = quill.root.innerHTML;
                 quillContainer.classList.add('hidden');
-                if(toolbar) toolbar.style.display = 'none'; // Use style display instead of class to ensure hide
+                if(toolbar) toolbar.classList.add('hidden');
                 sourceTextarea.classList.remove('hidden');
             } else {
                 // Switch to WYSIWYG
                 quill.clipboard.dangerouslyPasteHTML(sourceTextarea.value);
                 sourceTextarea.classList.add('hidden');
                 quillContainer.classList.remove('hidden');
-                if(toolbar) toolbar.style.display = 'block';
+                if(toolbar) toolbar.classList.remove('hidden');
             }
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
-            // Initialize Quill with modern config match
+            // Initialize Quill
             quill = new Quill('#editor-container', {
                 theme: 'snow',
-                placeholder: 'Tulis isi pengumuman di sini...',
                 modules: {
                     toolbar: [
                         [{ 'header': [1, 2, 3, false] }],
@@ -221,7 +183,7 @@
                 renderTable(data);
             } catch (err) {
                 console.error(err);
-                document.getElementById('news-body').innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-red-500 font-medium">Gagal memuat data. Periksa koneksi.</td></tr>';
+                document.getElementById('news-body').innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-red-500">Gagal.</td></tr>';
             }
         }
 
@@ -229,37 +191,23 @@
             const tbody = document.getElementById('news-body');
             tbody.innerHTML = '';
             if (data.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="4" class="px-6 py-12 text-center text-slate-500">
-                            <div class="flex flex-col items-center">
-                                <svg class="w-10 h-10 text-slate-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                                <span>Belum ada pengumuman yang dibuat.</span>
-                            </div>
-                        </td>
-                    </tr>`;
+                tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-slate-500">Belum ada pengumuman.</td></tr>';
                 return;
             }
             data.forEach(item => {
-                const date = new Date(item.created_at).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric'});
+                const date = new Date(item.created_at).toLocaleDateString('id-ID');
                 const statusBadge = item.is_published
-                    ? '<span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">Published</span>'
-                    : '<span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-slate-100 text-slate-600 border border-slate-200">Draft</span>';
+                    ? '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Published</span>'
+                    : '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">Draft</span>';
 
                 const row = `
-                    <tr class="hover:bg-blue-50/50 transition-colors duration-200 group">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 font-medium">${date}</td>
-                        <td class="px-6 py-4 text-sm text-slate-900 font-bold group-hover:text-blue-700 transition-colors">${item.title}</td>
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${date}</td>
+                        <td class="px-6 py-4 text-sm text-slate-900 font-medium">${item.title}</td>
                         <td class="px-6 py-4 whitespace-nowrap">${statusBadge}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div class="flex justify-end gap-2">
-                                <button onclick="editNews('${item.id}')" class="p-1.5 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors" title="Edit">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                </button>
-                                <button onclick="deleteNews('${item.id}')" class="p-1.5 text-red-600 hover:bg-red-100 rounded-lg transition-colors" title="Hapus">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                </button>
-                            </div>
+                            <button onclick="editNews('${item.id}')" class="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
+                            <button onclick="deleteNews('${item.id}')" class="text-red-600 hover:text-red-900">Hapus</button>
                         </td>
                     </tr>
                 `;
@@ -271,11 +219,12 @@
             document.getElementById('modal-news').classList.remove('hidden');
             document.getElementById('form-news').reset();
             document.getElementById('news-id').value = '';
-            quill.root.innerHTML = ''; 
+            quill.root.innerHTML = ''; // Reset editor
 
+            // Reset source view if active
             if(isSourceView) toggleSourceView();
 
-            document.getElementById('modal-title').innerText = 'Buat Pengumuman Baru';
+            document.getElementById('modal-title').innerText = 'Buat Pengumuman';
         }
 
         function closeModal() {
@@ -285,10 +234,11 @@
         function editNews(id) {
             document.getElementById('modal-news').classList.remove('hidden');
             document.getElementById('modal-title').innerText = 'Edit Pengumuman';
-            document.getElementById('form-news').reset(); 
+            document.getElementById('form-news').reset(); // Clear previous
             document.getElementById('news-id').value = id;
-            quill.root.innerHTML = '<p class="text-slate-400">Memuat konten...</p>';
+            quill.root.innerHTML = 'Loading...';
 
+            // Reset source view if active
             if(isSourceView) toggleSourceView();
 
             fetchSingleNews(id);
@@ -302,7 +252,7 @@
             if (data) {
                 document.getElementById('news-id').value = data.id;
                 document.getElementById('news-title').value = data.title;
-                quill.root.innerHTML = data.content; 
+                quill.root.innerHTML = data.content; // Set editor content
                 document.getElementById('news-published').checked = data.is_published;
             }
         }
@@ -311,6 +261,7 @@
             const id = document.getElementById('news-id').value;
             const title = document.getElementById('news-title').value;
 
+            // Get content from appropriate source
             let content = '';
             if (isSourceView) {
                 content = document.getElementById('source-editor').value;
@@ -320,7 +271,8 @@
 
             const is_published = document.getElementById('news-published').checked;
 
-            if (!title || (!content || content === '<p><br></p>')) return Swal.fire('Data Tidak Lengkap', 'Judul dan konten pengumuman wajib diisi.', 'warning');
+            // Check empty content
+            if (!title || (!content || content === '<p><br></p>')) return Swal.fire('Error', 'Judul dan konten wajib diisi', 'error');
 
             try {
                 Swal.fire({ title: 'Menyimpan...', didOpen: () => Swal.showLoading() });
@@ -338,7 +290,7 @@
 
                 await logActivity(id ? 'UPDATE_NEWS' : 'CREATE_NEWS', `Menyimpan pengumuman: ${title}`);
 
-                Swal.fire('Berhasil', 'Pengumuman telah disimpan.', 'success');
+                Swal.fire('Berhasil', 'Pengumuman tersimpan.', 'success');
                 closeModal();
                 loadNews();
 
@@ -349,14 +301,11 @@
 
         async function deleteNews(id) {
             const result = await Swal.fire({
-                title: 'Hapus Pengumuman?',
-                text: "Data yang dihapus tidak dapat dikembalikan.",
+                title: 'Hapus?',
+                text: "Pengumuman akan dihapus permanen.",
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#ef4444',
-                cancelButtonColor: '#64748b',
-                confirmButtonText: 'Ya, Hapus',
-                cancelButtonText: 'Batal'
+                confirmButtonText: 'Ya, Hapus'
             });
 
             if (result.isConfirmed) {
@@ -366,7 +315,6 @@
 
                     await logActivity('DELETE_NEWS', `Menghapus pengumuman ID: ${id}`);
                     loadNews();
-                    Swal.fire('Terhapus!', 'Pengumuman berhasil dihapus.', 'success');
                 } catch (err) {
                     Swal.fire('Error', err.message, 'error');
                 }
