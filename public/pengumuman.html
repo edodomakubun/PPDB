@@ -10,7 +10,20 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Inter', sans-serif; }</style>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Rich Text Content Styling */
+        .prose h1 { font-size: 1.5em; font-weight: bold; margin-bottom: 0.5em; }
+        .prose h2 { font-size: 1.25em; font-weight: bold; margin-bottom: 0.5em; }
+        .prose p { margin-bottom: 1em; }
+        .prose ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1em; }
+        .prose ol { list-style-type: decimal; padding-left: 1.5em; margin-bottom: 1em; }
+        .prose strong { font-weight: 700; }
+        .prose em { font-style: italic; }
+        .prose a { color: #2563eb; text-decoration: underline; }
+        .prose img { max-width: 100%; height: auto; border-radius: 0.5rem; margin: 1rem 0; }
+        .prose blockquote { border-left: 4px solid #e5e7eb; padding-left: 1rem; font-style: italic; color: #4b5563; }
+    </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased">
 
@@ -83,7 +96,7 @@
                                 </div>
                                 <h2 class="text-2xl font-bold text-slate-900 mb-4">${item.title}</h2>
                                 <div class="prose prose-blue text-slate-600">
-                                    ${item.content.replace(/\n/g, '<br>')}
+                                    ${item.content}
                                 </div>
                             </div>
                         </article>
