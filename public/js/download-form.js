@@ -135,7 +135,7 @@ async function downloadBlankForm() {
     // ================= FOOTER =================
     doc.setFontSize(8);
     // Kertas F4 memiliki tinggi 330mm, kita posisikan footer di Y=320 (10mm dari bawah)
-    doc.text('Formulir ini dapat diunduh di website resmi PPDB SD Inpres Lelingluan.', 105, 320, { align: 'center' });
+    doc.text('Formulir ini dapat diunduh di website resmi PPDB SD Inpres Lelingluan | sdinpreslelingluan-ppdb.pages.dev', 105, 320, { align: 'center' });
 
     // ================= SIMPAN PDF =================
     doc.save('Formulir_Pendaftaran_SD_Inpres_Lelingluan.pdf');
