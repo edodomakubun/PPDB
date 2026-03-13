@@ -71,6 +71,15 @@ async function downloadBlankForm() {
         doc.setFontSize(10);
     };
 
+    // Fungsi Helper: Membuat kotak centang (Checkbox)
+    const addCheckbox = (label) => {
+        doc.setLineWidth(0.3);
+        doc.rect(25, yPos - 3, 4, 4); // Gambar kotak 4x4 mm
+        doc.setFont('helvetica', 'normal');
+        doc.text(label, 32, yPos);
+        yPos += 8; // Jarak antar baris kotak centang
+    };
+
     // ================= KONTEN FORMULIR =================
 
     // A. DATA SISWA
@@ -88,12 +97,20 @@ async function downloadBlankForm() {
     yPos += 5;
     addSection('B. DATA ORANG TUA / WALI');
     addField('Nama Ayah');
+    addField('Tahun Lahir Ayah', '(YYYY)');
     addField('Pekerjaan Ayah');
     addField('Nama Ibu');
+    addField('Tahun Lahir Ibu', '(YYYY)');
     addField('Pekerjaan Ibu');
     addField('No. HP / WA', '(Yang bisa dihubungi)');
 
-    // C. PERNYATAAN
+    // C. LAMPIRAN YANG DISERTAKAN
+    yPos += 5;
+    addSection('C. LAMPIRAN YANG TERSEDIA');
+    addCheckbox('Kartu Keluarga');
+    addCheckbox('Akte Kelahiran');
+
+    // D. PERNYATAAN
     yPos += 10;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
