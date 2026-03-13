@@ -17,19 +17,36 @@ async function downloadBlankForm() {
 
     // ================= HEADER =================
     try {
-        // Memuat logo dari URL
+        // Memuat logo dari URL dan mengubahnya ke format Base64
         const logoUrl = 'https://pub-d21d85ef279e4275a4416a7e2920af41.r2.dev/pngegg%20(1).png';
-        const img = new Image();
-        img.crossOrigin = "Anonymous"; // Mencegah isu CORS
-        await new Promise((resolve, reject) => {
-            img.onload = resolve;
-            img.onerror = reject;
-            img.src = logoUrl;
-        });
-        // Menambahkan gambar ke PDF (Posisi X: 20, Y: 10, Lebar: 20mm, Tinggi: 20mm)
-        doc.addImage(img, 'PNG', 20, 10, 20, 20);
+        
+        // Fungsi untuk mengubah gambar eksternal menjadi Base64 via Canvas
+        const getBase64Image = (url) => {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'Anonymous'; // Penting untuk mengatasi CORS
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    // Ekspor ke format data URL (Base64)
+                    resolve(canvas.toDataURL('image/png'));
+                };
+                img.onerror = (error) => reject(error);
+                img.src = url;
+            });
+        };
+
+        const logoBase64 = await getBase64Image(logoUrl);
+        
+        // Menambahkan gambar ke PDF (Format, X, Y, Lebar, Tinggi)
+        doc.addImage(logoBase64, 'PNG', 20, 10, 20, 20);
     } catch (error) {
         console.warn("Gagal memuat logo untuk PDF. Melanjutkan tanpa logo...", error);
+        // Alert opsional agar Anda tahu jika gambar diblokir oleh server (CORS)
+        // alert("Logo tidak dapat dimuat karena kebijakan CORS dari server R2.");
     }
 
     doc.setFontSize(14); // Diperkecil dari 16
