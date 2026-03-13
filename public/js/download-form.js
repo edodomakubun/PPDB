@@ -1,6 +1,6 @@
 /**
  * Fungsi untuk mengunduh formulir pendaftaran kosong (PDF)
- * Ukuran: F4 (210mm x 330mm), 1 Halaman
+ * Ukuran: F4 (210mm x 330mm), 1 Halaman Pas (Compact)
  * Membutuhkan library: jsPDF (https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js)
  */
 async function downloadBlankForm() {
@@ -16,59 +16,57 @@ async function downloadBlankForm() {
     const doc = new jsPDF('p', 'mm', [210, 330]);
 
     // ================= HEADER =================
-    doc.setFontSize(16);
+    doc.setFontSize(14); // Diperkecil dari 16
     doc.setFont('helvetica', 'bold');
-    doc.text('FORMULIR PENDAFTARAN PESERTA DIDIK BARU', 105, 20, { align: 'center' });
+    doc.text('FORMULIR PENDAFTARAN PESERTA DIDIK BARU', 105, 15, { align: 'center' }); // Naik ke Y=15
 
-    doc.setFontSize(14);
-    doc.text('SD INPRES LELINGLUAN', 105, 28, { align: 'center' });
+    doc.setFontSize(12); // Diperkecil dari 14
+    doc.text('SD INPRES LELINGLUAN', 105, 22, { align: 'center' });
 
-    doc.setFontSize(10);
+    doc.setFontSize(9); // Diperkecil dari 10
     doc.setFont('helvetica', 'normal');
-    doc.text('Jl. Wearnusmurin, Desa Lelingluan, Kec. Tanimbar Utara', 105, 34, { align: 'center' });
+    doc.text('Jl. Wearnusmurin, Desa Lelingluan, Kec. Tanimbar Utara', 105, 27, { align: 'center' });
 
     // Garis Bawah Header
     doc.setLineWidth(0.5);
-    doc.line(20, 38, 190, 38);
+    doc.line(20, 31, 190, 31);
 
     // ================= FORM CONFIG =================
-    let yPos = 50;
-    const lineHeight = 10;
+    let yPos = 40; // Naik dari 50 agar lebih hemat ruang atas
     const lineLength = 100; // Panjang garis bawah untuk isian
     const labelX = 20;
     const valueX = 70;
 
-    // Fungsi Helper: Membuat baris isian
+    // Fungsi Helper: Membuat baris isian (Lebih padat)
     const addField = (label, subtext = '') => {
         doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9); // Ukuran font label
         doc.text(label, labelX, yPos);
 
         doc.setLineWidth(0.2);
-        // Menggambar garis titik-titik/lurus untuk tempat mengisi
+        // Menggambar garis lurus untuk tempat mengisi
         doc.line(valueX, yPos + 1, valueX + lineLength, yPos + 1);
 
         // Menambahkan teks bantuan kecil di bawah garis (jika ada)
         if (subtext) {
-            yPos += 5;
             doc.setFont('helvetica', 'italic');
-            doc.setFontSize(8);
-            doc.text(subtext, valueX, yPos);
-            doc.setFontSize(10); // Kembalikan ukuran font
+            doc.setFontSize(7); // Font bantuan lebih kecil
+            doc.text(subtext, valueX, yPos + 4.5); // Posisi tepat di bawah garis
+            yPos += 12; // Spasi baris dengan subtext
+        } else {
+            yPos += 8; // Spasi baris normal (lebih rapat)
         }
-
-        yPos += lineHeight;
     };
 
     // Fungsi Helper: Membuat judul blok/seksi
     const addSection = (title) => {
-        yPos += 5;
+        yPos += 3; // Jarak antar seksi diperkecil
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(11);
+        doc.setFontSize(10); // Font seksi diperkecil dari 11
         doc.setFillColor(230, 230, 230); // Warna latar abu-abu
-        doc.rect(20, yPos - 6, 170, 8, 'F'); // Kotak latar
+        doc.rect(20, yPos - 5, 170, 7, 'F'); // Kotak latar lebih tipis
         doc.text(title, 22, yPos);
-        yPos += 12;
-        doc.setFontSize(10);
+        yPos += 9; // Jarak setelah judul seksi
     };
 
     // Fungsi Helper: Membuat kotak centang (Checkbox)
@@ -76,8 +74,9 @@ async function downloadBlankForm() {
         doc.setLineWidth(0.3);
         doc.rect(25, yPos - 3, 4, 4); // Gambar kotak 4x4 mm
         doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
         doc.text(label, 32, yPos);
-        yPos += 8; // Jarak antar baris kotak centang
+        yPos += 6.5; // Jarak antar baris kotak centang diperapat
     };
 
     // ================= KONTEN FORMULIR =================
@@ -94,7 +93,6 @@ async function downloadBlankForm() {
     addField('Asal Sekolah', '(TK / PAUD / RA)');
 
     // B. DATA ORANG TUA
-    yPos += 5;
     addSection('B. DATA ORANG TUA / WALI');
     addField('Nama Ayah');
     addField('Tahun Lahir Ayah', '(YYYY)');
@@ -105,37 +103,36 @@ async function downloadBlankForm() {
     addField('No. HP / WA', '(Yang bisa dihubungi)');
 
     // C. LAMPIRAN YANG DISERTAKAN
-    yPos += 5;
     addSection('C. LAMPIRAN YANG TERSEDIA');
     addCheckbox('Kartu Keluarga');
     addCheckbox('Akte Kelahiran');
 
     // D. PERNYATAAN
-    yPos += 10;
+    yPos += 5;
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
+    doc.setFontSize(8.5); // Sedikit lebih kecil agar muat
     doc.text('Dengan ini saya menyatakan bahwa data yang saya isikan di atas adalah benar dan dapat dipertanggungjawabkan.', 20, yPos);
     
-    yPos += 5;
+    yPos += 4.5;
     doc.text('Saya bersedia mengikuti seluruh aturan dan prosedur penerimaan siswa baru di SD Inpres Lelingluan.', 20, yPos);
 
     // ================= TANDA TANGAN =================
-    yPos += 20;
+    yPos += 15; // Jarak menuju tanda tangan dikurangi
     const currentYear = new Date().getFullYear();
     
-    // Rata kanan untuk tanda tangan
+    // Rata kiri-kanan (Posisi tanda tangan di kanan)
     doc.text(`Lelingluan, .................................... ${currentYear}`, 130, yPos);
     
-    yPos += 25; // Jarak ruang tanda tangan
+    yPos += 18; // Ruang kosong untuk tanda tangan basah (cukup untuk F4)
     doc.text('( ..................................................... )', 130, yPos);
     
-    yPos += 5;
+    yPos += 4;
     doc.text('Tanda Tangan Orang Tua/Wali', 130, yPos);
 
     // ================= FOOTER =================
     doc.setFontSize(8);
-    // Kertas F4 memiliki tinggi 330mm, kita posisikan footer di Y=320 (10mm dari bawah)
-    doc.text('Formulir ini dapat diunduh di website resmi PPDB SD Inpres Lelingluan | sdinpreslelingluan-ppdb.pages.dev', 105, 320, { align: 'center' });
+    // Posisi footer di Y=320 (10mm dari batas bawah kertas F4)
+    doc.text('Formulir ini dapat diunduh di website resmi PPDB SD Inpres Lelingluan | sdinpreslelingluan-ppdb.pages.dev.', 105, 320, { align: 'center' });
 
     // ================= SIMPAN PDF =================
     doc.save('Formulir_Pendaftaran_SD_Inpres_Lelingluan.pdf');
