@@ -16,6 +16,22 @@ async function downloadBlankForm() {
     const doc = new jsPDF('p', 'mm', [210, 330]);
 
     // ================= HEADER =================
+    try {
+        // Memuat logo dari URL
+        const logoUrl = 'https://pub-d21d85ef279e4275a4416a7e2920af41.r2.dev/pngegg%20(1).png';
+        const img = new Image();
+        img.crossOrigin = "Anonymous"; // Mencegah isu CORS
+        await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+            img.src = logoUrl;
+        });
+        // Menambahkan gambar ke PDF (Posisi X: 20, Y: 10, Lebar: 20mm, Tinggi: 20mm)
+        doc.addImage(img, 'PNG', 20, 10, 20, 20);
+    } catch (error) {
+        console.warn("Gagal memuat logo untuk PDF. Melanjutkan tanpa logo...", error);
+    }
+
     doc.setFontSize(14); // Diperkecil dari 16
     doc.setFont('helvetica', 'bold');
     doc.text('FORMULIR PENDAFTARAN PESERTA DIDIK BARU', 105, 15, { align: 'center' }); // Naik ke Y=15
