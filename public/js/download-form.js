@@ -18,7 +18,7 @@ async function downloadBlankForm() {
     // ================= HEADER =================
     try {
         // Memuat logo dari URL dan mengubahnya ke format Base64
-        const logoUrl = 'https://pub-d21d85ef279e4275a4416a7e2920af41.r2.dev/pngegg%20(1).png';
+        const logoUrl = 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgevFDlSQZR1_KxH8P53eXvsmNnAL7oytxcfnOfPzvnB-0mAshpTF7gDU_ae_m5Or4LTd_KNhdxuO_jEou5lXvUL2q5iX8f0uNYEE26A2ZlEZf3wbGZ7RKv46q8vXAC3Qw5NEHekXBMCnlGcM8Og_RxLztt0uDtSaaNqaMeznF_ao2DAnGLHuZhiRqBXn-x/s1600/pngegg%20%281%29.png';
         
         // Fungsi untuk mengubah gambar eksternal menjadi Base64 via Canvas
         const getBase64Image = (url) => {
