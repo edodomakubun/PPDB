@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cetak Kartu Peserta - SD INPRES LELINGLUAN</title>
     <!-- Tailwind CSS v4 -->
-    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -22,39 +22,51 @@
             body { background: none; margin: 0; }
             .print-page { margin: 0; width: 100%; box-shadow: none; padding: 0; }
             .no-print { display: none !important; }
+            /* Memaksa browser mencetak warna latar/gradasi agar desain tetap modern */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
         }
     </style>
 </head>
 <body>
 
     <div class="no-print fixed top-4 right-4 z-50 flex gap-2">
-        <button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 font-bold flex items-center">
+        <button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 font-bold flex items-center cursor-pointer transition-colors">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
             Cetak / Simpan PDF
         </button>
-        <button onclick="window.close()" class="bg-white text-slate-700 border border-slate-300 px-4 py-2 rounded shadow hover:bg-slate-50">
+        <button onclick="window.close()" class="bg-white text-slate-700 border border-slate-300 px-4 py-2 rounded shadow hover:bg-slate-50 cursor-pointer transition-colors">
             Tutup
         </button>
     </div>
 
     <div class="print-page" id="card-container">
         <!-- Content Loaded via JS -->
-        <div class="text-center pt-20 text-slate-400">Memuat data...</div>
+        <div class="text-center pt-20 text-slate-400">Memuat data pendaftaran...</div>
     </div>
 
+    <!-- Konfigurasi Supabase Anda -->
     <script src="js/config.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             const urlParams = new URLSearchParams(window.location.search);
             const id = urlParams.get('id');
+            const container = document.getElementById('card-container');
 
+            // Mengganti alert dengan pesan DOM yang lebih ramah UI
             if (!id) {
-                alert('ID Siswa tidak ditemukan');
+                container.innerHTML = `
+                    <div class="text-red-600 text-center p-10 font-bold bg-red-50 rounded-lg border border-red-200 m-8">
+                        Parameter ID tidak ditemukan. Pastikan Anda membuka halaman ini melalui tautan yang benar.
+                    </div>
+                `;
                 return;
             }
 
             try {
-                // Fetch data & Settings
+                // Fetch data Siswa & Pengaturan Sekolah dari Supabase
                 const [studentRes, settingsRes] = await Promise.all([
                     supabaseClient.from('pendaftaran').select('*').eq('id', id).single(),
                     supabaseClient.from('app_settings').select('value').eq('key', 'school_profile').single()
@@ -63,10 +75,10 @@
                 if (studentRes.error) throw studentRes.error;
                 const data = studentRes.data;
 
-                // Parse Settings
+                // Parse Pengaturan Sekolah
                 let school = {
                     nama_sekolah: 'SD INPRES LELINGLUAN',
-                    alamat: 'Jl. Contoh No. 123, Desa Lelingluan, Kec. Tanimbar Utara',
+                    alamat: 'Jl. Wearnusmurin. 123, Desa Lelingluan, Kec. Tanimbar Utara',
                     kepala_sekolah: 'Admin Sekolah',
                     logo_url: ''
                 };
@@ -76,103 +88,134 @@
                     school = { ...school, ...saved };
                 }
 
-                // Get Photo URL
-                let fotoUrl = 'https://via.placeholder.com/150';
+                // Get Photo URL dari Supabase Storage
+                let fotoUrl = 'https://via.placeholder.com/150?text=Tidak+Ada+Foto';
                 if (data.foto_url) {
                     const { data: signedData } = await supabaseClient.storage.from('berkas_siswa').createSignedUrl(data.foto_url, 3600);
                     if (signedData) fotoUrl = signedData.signedUrl;
                 }
 
-                // Render
+                // Render Tanggal
                 const date = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
                 const regDate = new Date(data.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
-                const container = document.getElementById('card-container');
-
-                // Logo Handling
+                // Render Logo Sekolah
                 const logoImg = school.logo_url
-                    ? `<img src="${school.logo_url}" class="w-20 h-20 object-contain">`
-                    : `<div class="w-20 h-20 bg-blue-900 text-white flex items-center justify-center font-bold text-2xl rounded-full">SD</div>`;
+                    ? `<img src="${school.logo_url}" class="w-16 h-16 object-contain">`
+                    : `<div class="w-16 h-16 bg-blue-100 text-blue-800 flex items-center justify-center font-bold text-2xl rounded-xl">SD</div>`;
 
+                // Render UI Kartu Modern
                 container.innerHTML = `
-                    <div class="border-4 border-double border-slate-800 p-8 relative">
-                        <!-- Header -->
-                        <div class="flex items-center justify-between border-b-2 border-slate-800 pb-4 mb-6">
-                            ${logoImg}
-                            <div class="text-center flex-1 px-4">
-                                <h1 class="text-2xl font-bold uppercase tracking-wider mb-1">Panitia Penerimaan Peserta Didik Baru</h1>
-                                <h2 class="text-xl font-bold text-blue-900 uppercase">${school.nama_sekolah}</h2>
-                                <p class="text-sm text-slate-600">${school.alamat}</p>
+                    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden print:shadow-none print:border-none print:rounded-none">
+                        
+                        <!-- Header Gradasi Modern -->
+                        <div class="bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-900 p-8 flex items-center gap-6 text-white">
+                            <div class="bg-white p-2 rounded-2xl shadow-sm flex-shrink-0">
+                                ${logoImg}
                             </div>
-                            <div class="w-20"></div>
-                        </div>
-
-                        <div class="text-center mb-8">
-                            <h3 class="text-xl font-bold underline decoration-2 underline-offset-4">KARTU TANDA BUKTI PENDAFTARAN</h3>
-                            <p class="text-sm text-slate-500 mt-2 font-mono">NO. REG: <span class="text-lg font-bold text-black bg-yellow-100 px-2">${data.nik}</span></p>
-                        </div>
-
-                        <div class="flex gap-8 mb-8">
-                            <!-- Photo -->
-                            <div class="w-40 h-48 border-2 border-slate-300 bg-slate-100 flex-shrink-0">
-                                <img src="${fotoUrl}" class="w-full h-full object-cover">
-                            </div>
-
-                            <!-- Details -->
-                            <div class="flex-1 text-sm space-y-3">
-                                <div class="grid grid-cols-3 border-b border-dotted border-slate-300 pb-1">
-                                    <div class="font-bold text-slate-700">Nama Lengkap</div>
-                                    <div class="col-span-2 uppercase font-semibold">: ${data.nama_lengkap}</div>
-                                </div>
-                                <div class="grid grid-cols-3 border-b border-dotted border-slate-300 pb-1">
-                                    <div class="font-bold text-slate-700">NIK</div>
-                                    <div class="col-span-2">: ${data.nik}</div>
-                                </div>
-                                <div class="grid grid-cols-3 border-b border-dotted border-slate-300 pb-1">
-                                    <div class="font-bold text-slate-700">Tempat, Tgl Lahir</div>
-                                    <div class="col-span-2">: ${data.tempat_lahir}, ${new Date(data.tanggal_lahir).toLocaleDateString('id-ID')}</div>
-                                </div>
-                                <div class="grid grid-cols-3 border-b border-dotted border-slate-300 pb-1">
-                                    <div class="font-bold text-slate-700">Jenis Kelamin</div>
-                                    <div class="col-span-2">: ${data.jenis_kelamin}</div>
-                                </div>
-                                <div class="grid grid-cols-3 border-b border-dotted border-slate-300 pb-1">
-                                    <div class="font-bold text-slate-700">Asal Sekolah</div>
-                                    <div class="col-span-2">: ${data.asal_sekolah || '-'}</div>
-                                </div>
-                                <div class="grid grid-cols-3 border-b border-dotted border-slate-300 pb-1">
-                                    <div class="font-bold text-slate-700">Tanggal Daftar</div>
-                                    <div class="col-span-2">: ${regDate}</div>
-                                </div>
+                            <div class="flex-1">
+                                <h1 class="text-xs sm:text-sm font-bold tracking-widest text-blue-200 uppercase mb-1 drop-shadow-sm">Penerimaan Peserta Didik Baru</h1>
+                                <h2 class="text-2xl font-black uppercase tracking-wide drop-shadow-md mb-1">${school.nama_sekolah}</h2>
+                                <p class="text-xs sm:text-sm text-blue-100 font-light flex items-center gap-1.5 opacity-90">
+                                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                    ${school.alamat}
+                                </p>
                             </div>
                         </div>
 
-                        <!-- Footer / Signature -->
-                        <div class="flex justify-between items-start mt-12 pt-8">
-                            <div class="text-center w-64">
-                                <p class="text-sm mb-16">Siswa Pendaftar,</p>
-                                <p class="font-bold border-b border-slate-400 inline-block px-4">${data.nama_lengkap}</p>
-                            </div>
-                            <div class="text-center w-64">
-                                <p class="text-sm mb-2">Lelingluan, ${date}</p>
-                                <p class="text-sm mb-12">Kepala Sekolah,</p>
-                                <p class="font-bold border-b border-slate-400 inline-block px-4">${school.kepala_sekolah}</p>
+                        <!-- Bar Identitas Kartu -->
+                        <div class="bg-slate-50 border-b border-slate-200 px-8 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                            <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                KARTU BUKTI PENDAFTARAN
+                            </h3>
+                            <div class="bg-white text-blue-800 px-4 py-1.5 rounded-lg font-mono font-bold text-sm border border-blue-200 shadow-sm flex items-center gap-3">
+                                <span class="text-slate-400 text-xs tracking-wider">NO. REG</span>
+                                <span class="text-lg tracking-wider">${data.nik || '-'}</span>
                             </div>
                         </div>
 
-                        <div class="mt-12 p-4 bg-slate-50 border border-slate-200 text-xs text-slate-500 rounded text-center italic">
-                            * Kartu ini adalah bukti sah pendaftaran. Harap dibawa saat proses verifikasi ulang.
-                            <br>
-                            * Cek status kelulusan secara berkala di website resmi sekolah.
+                        <!-- Area Konten Utama -->
+                        <div class="p-8 flex flex-col sm:flex-row gap-8">
+                            
+                            <!-- Kolom Foto -->
+                            <div class="w-32 flex-shrink-0 flex flex-col items-center gap-3 mx-auto sm:mx-0">
+                                <div class="w-32 h-40 rounded-xl overflow-hidden shadow-md border-4 border-white ring-1 ring-slate-200 bg-slate-100 relative">
+                                    <img src="${fotoUrl}" class="w-full h-full object-cover">
+                                    <!-- Aksen bayangan transparan di atas foto -->
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
+                                </div>
+                                <div class="px-2 py-1.5 w-full bg-slate-50 rounded-md text-center border border-slate-200">
+                                    <span class="text-[10px] text-slate-500 font-mono tracking-widest break-all">ID:${String(data.id || data.nik).substring(0,8)}</span>
+                                </div>
+                            </div>
+
+                            <!-- Kolom Detail -->
+                            <div class="flex-1 space-y-2.5 mt-1">
+                                <div class="bg-slate-50 rounded-lg p-3 px-4 flex flex-col sm:flex-row sm:items-center border border-slate-100">
+                                    <div class="w-full sm:w-1/3 text-slate-500 font-semibold text-xs uppercase tracking-wider mb-1 sm:mb-0">Nama Lengkap</div>
+                                    <div class="w-full sm:w-2/3 text-slate-800 font-bold uppercase text-base">${data.nama_lengkap || '-'}</div>
+                                </div>
+                                <div class="bg-white rounded-lg p-3 px-4 flex flex-col sm:flex-row sm:items-center border border-slate-100">
+                                    <div class="w-full sm:w-1/3 text-slate-500 font-semibold text-xs uppercase tracking-wider mb-1 sm:mb-0">NIK</div>
+                                    <div class="w-full sm:w-2/3 text-slate-800 font-mono text-sm font-semibold">${data.nik || '-'}</div>
+                                </div>
+                                <div class="bg-slate-50 rounded-lg p-3 px-4 flex flex-col sm:flex-row sm:items-center border border-slate-100">
+                                    <div class="w-full sm:w-1/3 text-slate-500 font-semibold text-xs uppercase tracking-wider mb-1 sm:mb-0">Tempat, Tgl Lahir</div>
+                                    <div class="w-full sm:w-2/3 text-slate-800 text-sm font-medium">${data.tempat_lahir || '-'}, ${data.tanggal_lahir ? new Date(data.tanggal_lahir).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'}) : '-'}</div>
+                                </div>
+                                <div class="bg-white rounded-lg p-3 px-4 flex flex-col sm:flex-row sm:items-center border border-slate-100">
+                                    <div class="w-full sm:w-1/3 text-slate-500 font-semibold text-xs uppercase tracking-wider mb-1 sm:mb-0">Jenis Kelamin</div>
+                                    <div class="w-full sm:w-2/3 text-slate-800 text-sm font-medium">${data.jenis_kelamin || '-'}</div>
+                                </div>
+                                <div class="bg-slate-50 rounded-lg p-3 px-4 flex flex-col sm:flex-row sm:items-center border border-slate-100">
+                                    <div class="w-full sm:w-1/3 text-slate-500 font-semibold text-xs uppercase tracking-wider mb-1 sm:mb-0">Asal Sekolah</div>
+                                    <div class="w-full sm:w-2/3 text-slate-800 text-sm font-medium">${data.asal_sekolah || '-'}</div>
+                                </div>
+                                <div class="bg-white rounded-lg p-3 px-4 flex flex-col sm:flex-row sm:items-center border border-slate-100">
+                                    <div class="w-full sm:w-1/3 text-slate-500 font-semibold text-xs uppercase tracking-wider mb-1 sm:mb-0">Tanggal Daftar</div>
+                                    <div class="w-full sm:w-2/3 text-slate-800 text-sm font-medium">${regDate}</div>
+                                </div>
+                            </div>
                         </div>
+
+                        <!-- Footer Tanda Tangan -->
+                        <div class="px-10 pb-10 flex justify-between items-end mt-4">
+                            <div class="text-center w-48 relative">
+                                <p class="text-xs text-slate-500 mb-16">Siswa Pendaftar,</p>
+                                <p class="font-bold text-slate-800 border-b border-slate-300 pb-1 text-sm">${data.nama_lengkap || '............................'}</p>
+                            </div>
+                            <div class="text-center w-56 relative">
+                                <p class="text-xs text-slate-500 mb-1">Lelingluan, ${date}</p>
+                                <p class="text-xs text-slate-500 mb-16">Kepala Sekolah,</p>
+                                <p class="font-bold text-slate-800 border-b border-slate-300 pb-1 text-sm">${school.kepala_sekolah}</p>
+                            </div>
+                        </div>
+
+                        <!-- Catatan Bawah -->
+                        <div class="bg-blue-50/70 border-t border-blue-100 p-5 px-8 text-xs text-blue-900 flex gap-4 mt-auto">
+                            <div class="mt-0.5">
+                                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </div>
+                            <div>
+                                <p class="font-bold mb-1">Informasi Penting:</p>
+                                <ul class="list-disc pl-4 space-y-1 text-blue-800/80">
+                                    <li>Kartu ini adalah bukti sah pendaftaran. Harap dicetak dan dibawa saat proses verifikasi ulang/daftar ulang.</li>
+                                    <li>Cek status kelulusan secara berkala di website resmi sdinpreslelingluan-ppdb.pages.dev</li>
+                                </ul>
+                            </div>
+                        </div>
+
                     </div>
                 `;
 
-                // Auto print after small delay? No, user can click button.
-
             } catch (err) {
-                console.error(err);
-                document.getElementById('card-container').innerHTML = `<div class="text-red-500 text-center p-10">Gagal memuat data: ${err.message}</div>`;
+                console.error("Fetch Data Error:", err);
+                container.innerHTML = `
+                    <div class="text-red-600 text-center p-10 font-bold bg-red-50 rounded-lg border border-red-200 m-8">
+                        Gagal memuat data pendaftaran: ${err.message}
+                    </div>
+                `;
             }
         });
     </script>
