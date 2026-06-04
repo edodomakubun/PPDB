@@ -2,267 +2,338 @@
 <html lang="id" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SPMB 2026 - SD INPRES LELINGLUAN</title>
     <!-- Tailwind CSS v4 -->
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- PDF Generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .blob { position: absolute; filter: blur(4rem); z-index: -1; opacity: 0.6; }
-        .animate-float { animation: float 6s ease-in-out infinite; }
-        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-20px); } 100% { transform: translateY(0px); } }
-        .fade-in-up { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
-        .fade-in-up.visible { opacity: 1; transform: translateY(0); }
+        /* Menggunakan font yang lebih bold dan playful */
+        body { 
+            font-family: 'Space Grotesk', sans-serif; 
+            background-color: #FDFBF7;
+        }
 
-        /* Dark Mode */
-        html.dark body { background-color: #0f172a; color: #e2e8f0; }
-        html.dark .bg-white { background-color: #1e293b; }
-        html.dark .bg-slate-50 { background-color: #0f172a; }
-        html.dark .text-slate-900 { color: #f8fafc; }
-        html.dark .text-slate-600 { color: #94a3b8; }
-        html.dark .border-slate-100, html.dark .border-slate-200 { border-color: #334155; }
-        html.dark nav { background-color: rgba(30, 41, 59, 0.8); }
+        .font-sans {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        /* Pattern latar belakang Neo-brutalist */
+        .bg-pattern {
+            background-image: 
+                linear-gradient(#000000 1px, transparent 1px),
+                linear-gradient(90deg, #000000 1px, transparent 1px);
+            background-size: 32px 32px;
+            background-position: center center;
+            opacity: 0.05;
+        }
+
+        html.dark .bg-pattern {
+            background-image: 
+                linear-gradient(#FFFFFF 1px, transparent 1px),
+                linear-gradient(90deg, #FFFFFF 1px, transparent 1px);
+        }
+
+        html.dark body {
+            background-color: #121212;
+            color: #FFFFFF;
+        }
+
+        /* Neo Brutalism UI Classes */
+        .neo-border {
+            border: 3px solid #111827;
+        }
+        html.dark .neo-border {
+            border: 3px solid #E5E7EB;
+        }
+
+        .neo-shadow {
+            box-shadow: 6px 6px 0px 0px #111827;
+        }
+        html.dark .neo-shadow {
+            box-shadow: 6px 6px 0px 0px #E5E7EB;
+        }
+        
+        .neo-shadow-large {
+            box-shadow: 12px 12px 0px 0px #111827;
+        }
+        html.dark .neo-shadow-large {
+            box-shadow: 12px 12px 0px 0px #E5E7EB;
+        }
+
+        .neo-hover {
+            transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .neo-hover:hover {
+            transform: translate(4px, 4px);
+            box-shadow: 2px 2px 0px 0px #111827;
+        }
+        html.dark .neo-hover:hover {
+            box-shadow: 2px 2px 0px 0px #E5E7EB;
+        }
+        
+        .neo-hover-large:hover {
+            transform: translate(6px, 6px);
+            box-shadow: 6px 6px 0px 0px #111827;
+        }
+        html.dark .neo-hover-large:hover {
+            box-shadow: 6px 6px 0px 0px #E5E7EB;
+        }
+
+        /* Abstract shapes animation */
+        @keyframes spin-slow {
+            100% { transform: rotate(360deg); }
+        }
+        .animate-spin-slow {
+            animation: spin-slow 12s linear infinite;
+        }
+
+        @keyframes bounce-slow {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        .animate-bounce-slow {
+            animation: bounce-slow 4s ease-in-out infinite;
+        }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased overflow-x-hidden selection:bg-blue-200 selection:text-blue-900 transition-colors duration-300">
+<body class="text-slate-900 dark:text-slate-100 overflow-x-hidden transition-colors duration-300 relative selection:bg-[#FFD166] selection:text-black">
 
-    <!-- Navigation -->
-    <nav class="fixed w-full z-50 bg-white/80 backdrop-blur-lg border-b border-slate-200/50 transition-all duration-300" id="navbar">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-20 items-center">
-                <!-- Logo -->
-                <a href="index.html" class="flex items-center gap-3 group">
-                    <div id="nav-logo-container" class="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/30 group-hover:scale-105 transition-transform duration-300">
-                        SD
-                    </div>
-                    <div class="flex flex-col">
-                        <span class="font-bold text-lg leading-tight text-slate-900 group-hover:text-blue-600 transition-colors" id="nav-school-name">SD INPRES LELINGLUAN</span>
-                        <span class="text-[10px] uppercase tracking-widest text-slate-500 font-semibold">SISTEM PENERIMAAN MURID BARU</span>
-                    </div>
+    <div class="fixed inset-0 bg-pattern pointer-events-none z-[-1]"></div>
+
+    <!-- Navbar -->
+    <nav id="navbar" class="fixed w-full z-50 top-4 transition-all px-4 sm:px-6 lg:px-8 max-w-7xl left-1/2 -translate-x-1/2">
+        <div class="flex justify-between items-center h-20 bg-white dark:bg-slate-900 neo-border neo-shadow rounded-2xl px-6">
+            <!-- Logo -->
+            <a href="index.html" class="flex items-center gap-4 group">
+                <div id="nav-logo-container" class="w-12 h-12 rounded-xl bg-[#EF476F] neo-border flex items-center justify-center text-white font-black text-lg group-hover:rotate-12 transition-transform">
+                    SD
+                </div>
+                <div class="flex flex-col">
+                    <span id="nav-school-name" class="font-black text-lg md:text-xl tracking-tight leading-none uppercase">SD Inpres Lelingluan</span>
+                    <span class="text-[11px] font-bold tracking-widest uppercase mt-1 text-slate-500 dark:text-slate-400">Kec. Tanimbar Utara - KKT - Maluku</span>
+                </div>
+            </a>
+
+            <!-- Desktop Links -->
+            <div class="hidden lg:flex items-center gap-8 font-bold text-sm">
+                <a href="index.html" class="relative group">
+                    <span class="text-[#EF476F]">Beranda</span>
+                    <div class="absolute -bottom-2 left-0 w-full h-1 bg-[#EF476F] neo-border"></div>
                 </a>
+                <a href="pengumuman.html" class="hover:text-[#118AB2] hover:-translate-y-1 transition-transform">Pengumuman</a>
+                <a href="#fitur" class="hover:text-[#06D6A0] hover:-translate-y-1 transition-transform">Fitur</a>
+            </div>
 
-                <!-- Desktop Menu -->
-                <div class="hidden md:flex items-center gap-8">
-                    <a href="index.html" class="text-sm font-medium text-blue-600 font-semibold relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-0.5 after:bg-blue-600">Beranda</a>
-                    <a href="pengumuman.html" class="text-sm font-medium text-slate-600 hover:text-blue-600 transition relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-blue-600 after:transition-all hover:after:w-full">Pengumuman</a>
-                    <a href="#fitur" class="text-sm font-medium text-slate-600 hover:text-blue-600 transition relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-blue-600 after:transition-all hover:after:w-full">Fitur</a>
-                </div>
-
-                <!-- Right Actions -->
-                <div class="flex items-center gap-3">
-                    <button id="theme-toggle" class="p-2 rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
-                        <svg id="theme-toggle-light-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path></svg>
-                        <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
-                    </button>
-                    <a href="login.html" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-blue-600 transition hidden sm:block dark:text-slate-300 dark:hover:text-white">
-                        Login Admin
-                    </a>
-                    <a href="daftar.html" class="hidden sm:inline-block px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-semibold text-sm transition shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-0.5">
-                        Daftar Sekarang
-                    </a>
-                    <!-- Mobile Menu Button -->
-                    <button id="mobile-menu-btn" class="md:hidden p-2 text-slate-600 hover:text-blue-600 focus:outline-none">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-                    </button>
-                </div>
+            <!-- Right Actions -->
+            <div class="flex items-center gap-4">
+                <button id="theme-toggle" class="w-10 h-10 flex items-center justify-center rounded-xl bg-[#FFD166] neo-border neo-shadow neo-hover text-black">
+                    <svg id="theme-toggle-light-icon" class="hidden w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                </button>
+                <a href="login.html" class="hidden md:flex items-center font-bold text-sm hover:-translate-y-1 transition-transform">
+                    Login
+                </a>
+                <a href="daftar.html" class="hidden md:flex px-6 py-2.5 bg-[#06D6A0] text-black font-black text-sm rounded-xl neo-border neo-shadow neo-hover">
+                    Daftar!
+                </a>
+                <button id="mobile-menu-btn" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-slate-800 neo-border neo-shadow neo-hover text-black dark:text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
             </div>
         </div>
 
         <!-- Mobile Menu -->
-        <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-slate-100 shadow-lg absolute w-full left-0 top-20">
-            <div class="px-4 pt-4 pb-6 space-y-3">
-                <a href="index.html" class="block px-3 py-2 text-base font-medium text-blue-600 bg-blue-50 rounded-lg">Beranda</a>
-                <a href="pengumuman.html" class="block px-3 py-2 text-base font-medium text-slate-600 hover:bg-slate-50 hover:text-blue-600 rounded-lg">Pengumuman</a>
-                <a href="#fitur" class="block px-3 py-2 text-base font-medium text-slate-600 hover:bg-slate-50 hover:text-blue-600 rounded-lg">Fitur</a>
-                <a href="login.html" class="block px-3 py-2 text-base font-medium text-slate-600 hover:bg-slate-50 hover:text-blue-600 rounded-lg">Login Admin</a>
-                <a href="daftar.html" class="block px-3 py-2 text-center font-bold text-white bg-blue-600 rounded-lg shadow-md mt-4">Daftar Sekarang</a>
+        <div id="mobile-menu" class="hidden lg:hidden mt-4 bg-white dark:bg-slate-900 neo-border neo-shadow-large rounded-2xl p-6">
+            <div class="flex flex-col gap-4 font-bold text-lg">
+                <a href="index.html" class="block p-4 rounded-xl bg-[#FFD166] neo-border text-black">Beranda</a>
+                <a href="pengumuman.html" class="block p-4 rounded-xl bg-slate-100 dark:bg-slate-800 neo-border hover:bg-[#118AB2] hover:text-white transition-colors">Pengumuman</a>
+                <a href="#fitur" class="block p-4 rounded-xl bg-slate-100 dark:bg-slate-800 neo-border hover:bg-[#06D6A0] hover:text-black transition-colors">Fitur</a>
+                <a href="login.html" class="block p-4 rounded-xl bg-slate-100 dark:bg-slate-800 neo-border">Login Admin</a>
+                <a href="daftar.html" class="block p-4 rounded-xl bg-[#EF476F] text-white neo-border text-center text-xl mt-4">Daftar Sekarang!</a>
             </div>
         </div>
     </nav>
 
     <!-- Hero Section -->
-    <header class="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden">
-        <!-- Animated Background Blobs -->
-        <div class="blob bg-blue-200 w-96 h-96 rounded-full top-0 left-0 -translate-x-1/2 -translate-y-1/2 animate-float"></div>
-        <div class="blob bg-indigo-200 w-80 h-80 rounded-full bottom-0 right-0 translate-x-1/3 translate-y-1/3 animate-float" style="animation-delay: -2s;"></div>
-        <div class="blob bg-teal-100 w-64 h-64 rounded-full top-1/2 left-2/3 animate-float" style="animation-delay: -4s;"></div>
+    <header class="pt-40 pb-20 md:pt-56 md:pb-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative overflow-visible">
+        
+        <!-- Abstract Decorative Shapes -->
+        <div class="absolute top-32 right-10 md:right-32 w-24 h-24 bg-[#FFD166] neo-border neo-shadow rounded-full animate-bounce-slow hidden sm:block z-[-1]"></div>
+        <div class="absolute bottom-20 left-10 md:left-20 w-20 h-20 bg-[#06D6A0] neo-border neo-shadow animate-spin-slow hidden sm:block z-[-1]" style="border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;"></div>
+        <div class="absolute top-64 left-5 w-12 h-12 bg-[#118AB2] neo-border neo-shadow rounded-sm rotate-45 animate-bounce-slow hidden md:block z-[-1]" style="animation-delay: 1s;"></div>
 
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-            <span class="inline-block px-4 py-1.5 rounded-full bg-blue-50 text-blue-600 text-xs font-bold uppercase tracking-wider mb-6 border border-blue-100 shadow-sm fade-in-up">
+        <div class="text-center max-w-5xl mx-auto relative z-10">
+            <div class="inline-block px-4 py-2 bg-[#118AB2] text-white font-bold tracking-widest uppercase neo-border neo-shadow text-sm rounded-xl mb-8 rotate-[-2deg]">
                 Penerimaan Peserta Didik Baru 2026
-            </span>
-
-            <div class="text-5xl sm:text-6xl md:text-7xl font-extrabold text-slate-900 tracking-tight mb-8 leading-tight fade-in-up" style="transition-delay: 100ms;">
-                Membangun Generasi <br class="hidden md:block" />
-                <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">Cerdas & Berkarakter</span>
             </div>
+            
+            <h1 class="text-6xl sm:text-7xl md:text-[6rem] lg:text-[8rem] font-black tracking-tighter leading-[0.95] mb-8 uppercase text-slate-900 dark:text-white" style="text-shadow: 4px 4px 0px #EF476F;">
+                Belajar<br>Lebih <span class="text-white dark:text-slate-900" style="text-shadow: 
+                -3px -3px 0 #111827, 3px -3px 0 #111827, -3px 3px 0 #111827, 3px 3px 0 #111827,
+                6px 6px 0 #FFD166; dark:text-shadow: 6px 6px 0 #FFD166;">Seru!</span>
+            </h1>
 
-            <div class="text-lg sm:text-xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed fade-in-up" style="transition-delay: 200ms;">
-                Bergabunglah bersama kami di <span class="school-name-text font-bold text-slate-800">SD INPRES LELINGLUAN</span>.
-                Kami berkomitmen mencetak siswa berprestasi dengan lingkungan belajar yang modern dan berbudi luhur.
-            </div>
+            <p class="text-xl md:text-2xl font-bold font-sans text-slate-700 dark:text-slate-300 max-w-2xl mx-auto mb-12">
+                SD INPRES LELINGLUAN menawarkan pengalaman belajar modern yang kreatif, aktif, dan penuh semangat!
+            </p>
 
-            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center fade-in-up" style="transition-delay: 300ms;">
-                <a href="daftar.html" class="group relative px-8 py-4 bg-blue-600 text-white font-bold rounded-2xl shadow-xl shadow-blue-500/30 overflow-hidden transition hover:-translate-y-1 hover:shadow-2xl">
-                    <div class="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
-                    <span class="flex items-center gap-2">
-                        Mulai Pendaftaran
-                        <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
-                    </span>
+            <div class="flex flex-col sm:flex-row justify-center items-center gap-6">
+                <a href="daftar.html" class="w-full sm:w-auto px-10 py-5 bg-[#EF476F] text-white text-xl font-black rounded-2xl neo-border neo-shadow-large neo-hover-large flex items-center justify-center gap-3">
+                    MULAI DAFTAR 
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="4"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                 </a>
-                <a href="cek-status.html" class="px-8 py-4 bg-white text-slate-700 font-bold rounded-2xl shadow-lg border border-slate-100 hover:border-blue-200 hover:text-blue-600 transition hover:-translate-y-1">
-                    Cek Status Kelulusan
-                </a>
-            </div>
-
-            <div class="mt-12 fade-in-up" style="transition-delay: 400ms;">
-                <button onclick="downloadBlankForm()" class="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-blue-600 transition group">
-                    <div class="p-2 bg-white rounded-lg shadow-sm group-hover:shadow-md border border-slate-200 group-hover:border-blue-200 transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    </div>
-                    <span>Download Formulir Manual (PDF)</span>
+                <button onclick="downloadBlankForm()" class="w-full sm:w-auto px-8 py-5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-lg font-bold rounded-2xl neo-border neo-shadow neo-hover flex items-center justify-center gap-3">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Formulir Manual
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- Features Grid -->
-    <section id="fitur" class="py-24 bg-white relative">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-20 fade-in-up">
-                <h2 class="text-3xl font-bold text-slate-900 mb-4">Mengapa Memilih Kami?</h2>
-                <div class="w-24 h-1.5 bg-gradient-to-r from-blue-600 to-purple-600 mx-auto rounded-full"></div>
+    <!-- Moving Marquee Line -->
+    <div class="w-full bg-[#FFD166] neo-border py-4 overflow-hidden rotate-2 relative left-[-2vw] w-[104vw] shadow-[0_4px_0_0_#000]">
+        <div class="whitespace-nowrap flex font-black text-2xl uppercase tracking-widest text-black">
+            <span class="mx-4">• TERAKREDITASI B • FASILITAS LENGKAP • GURU PROFESIONAL • KURIKULUM MERDEKA • LINGKUNGAN AMAN </span>
+            <span class="mx-4">• TERAKREDITASI B • FASILITAS LENGKAP • GURU PROFESIONAL • KURIKULUM MERDEKA • LINGKUNGAN AMAN </span>
+            <span class="mx-4">• TERAKREDITASI B • FASILITAS LENGKAP • GURU PROFESIONAL • KURIKULUM MERDEKA • LINGKUNGAN AMAN </span>
+        </div>
+    </div>
+
+    <!-- Keunggulan Section (Bento Neo-Brutalism) -->
+    <section id="fitur" class="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div class="mb-16">
+            <h2 class="text-5xl md:text-7xl font-black uppercase mb-4" style="text-shadow: 4px 4px 0px #06D6A0;">Mengapa Kami?</h2>
+            <p class="text-xl font-bold font-sans text-slate-600 dark:text-slate-400">Pendidikan terbaik dengan pendekatan holistik untuk masa depan anak.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Card 1 -->
+            <div class="bg-[#118AB2] text-white p-8 rounded-3xl neo-border neo-shadow-large neo-hover-large flex flex-col justify-between h-80">
+                <div class="w-16 h-16 bg-white neo-border rounded-full flex items-center justify-center text-[#118AB2]">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                </div>
+                <div>
+                    <h3 class="text-3xl font-black mb-2">Kurikulum Merdeka</h3>
+                    <p class="font-sans font-semibold text-white/90">Berpusat pada minat dan bakat anak secara menyenangkan.</p>
+                </div>
             </div>
 
-            <div class="grid md:grid-cols-3 gap-8">
-                <!-- Card 1 -->
-                <div class="group p-8 rounded-3xl bg-slate-50 border border-slate-100 hover:bg-white hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-2 transition-all duration-300 fade-in-up">
-                    <div class="w-14 h-14 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-6 text-2xl group-hover:scale-110 group-hover:rotate-3 transition-transform">
-                        🎓
-                    </div>
-                    <h3 class="text-xl font-bold text-slate-900 mb-3">Kurikulum Merdeka</h3>
-                    <p class="text-slate-600 leading-relaxed text-sm">
-                        Pembelajaran yang berpusat pada siswa, mengembangkan minat dan bakat secara natural dan menyenangkan.
-                    </p>
+            <!-- Card 2 -->
+            <div class="bg-[#FFD166] text-black p-8 rounded-3xl neo-border neo-shadow-large neo-hover-large flex flex-col justify-between h-80">
+                <div class="w-16 h-16 bg-white neo-border rounded-xl flex items-center justify-center text-[#EF476F]">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
                 </div>
-
-                <!-- Card 2 -->
-                <div class="group p-8 rounded-3xl bg-slate-50 border border-slate-100 hover:bg-white hover:shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-2 transition-all duration-300 fade-in-up" style="transition-delay: 100ms;">
-                    <div class="w-14 h-14 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mb-6 text-2xl group-hover:scale-110 group-hover:rotate-3 transition-transform">
-                        🏫
-                    </div>
-                    <h3 class="text-xl font-bold text-slate-900 mb-3">Fasilitas Lengkap</h3>
-                    <p class="text-slate-600 leading-relaxed text-sm">
-                        Ruang kelas nyaman, perpustakaan digital, lab komputer, dan area bermain yang aman dan asri.
-                    </p>
+                <div>
+                    <h3 class="text-3xl font-black mb-2">Fasilitas Memadai</h3>
+                    <p class="font-sans font-bold">Perpustakaan, WC, dan ruang kelas.</p>
                 </div>
+            </div>
 
-                <!-- Card 3 -->
-                <div class="group p-8 rounded-3xl bg-slate-50 border border-slate-100 hover:bg-white hover:shadow-xl hover:shadow-purple-500/10 hover:-translate-y-2 transition-all duration-300 fade-in-up" style="transition-delay: 200ms;">
-                    <div class="w-14 h-14 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center mb-6 text-2xl group-hover:scale-110 group-hover:rotate-3 transition-transform">
-                        ⭐
-                    </div>
-                    <h3 class="text-xl font-bold text-slate-900 mb-3">Guru Profesional</h3>
-                    <p class="text-slate-600 leading-relaxed text-sm">
-                        Dididik oleh tenaga pengajar berpengalaman, sabar, dan berdedikasi tinggi dalam membentuk karakter anak.
-                    </p>
+            <!-- Card 3 -->
+            <div class="bg-[#EF476F] text-white p-8 rounded-3xl neo-border neo-shadow-large neo-hover-large flex flex-col justify-between h-80 lg:col-span-1 md:col-span-2">
+                <div class="w-16 h-16 bg-white neo-border rounded-xl rotate-12 flex items-center justify-center text-[#118AB2]">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                </div>
+                <div>
+                    <h3 class="text-3xl font-black mb-2">Guru Profesional</h3>
+                    <p class="font-sans font-semibold text-white/90">Staf pengajar handal, ramah, dan berdedikasi tinggi.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Gallery Section -->
-    <section id="galeri" class="py-24 bg-slate-50 relative border-t border-slate-100">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16 fade-in-up">
-                <h2 class="text-3xl font-bold text-slate-900 mb-4">Galeri Sekolah</h2>
-                <div class="w-24 h-1.5 bg-blue-600 mx-auto rounded-full"></div>
-                <p class="mt-4 text-slate-600">Momen-momen kegiatan belajar dan bermain siswa.</p>
-            </div>
+    <!-- Gallery Section (Polaroid Style) -->
+    <section id="galeri" class="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div class="mb-16">
+            <h2 class="text-5xl md:text-7xl font-black uppercase mb-4" style="text-shadow: 4px 4px 0px #118AB2;">Galeri Kami</h2>
+            <p class="text-xl font-bold font-sans text-slate-600 dark:text-slate-400">Intip keseruan belajar dan bermain di sekolah kami!</p>
+        </div>
 
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="gallery-container">
-                <!-- Gallery Loaded via JS -->
-                <div class="col-span-full text-center text-slate-400">Memuat galeri...</div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8" id="gallery-container">
+            <!-- Gallery Loaded via JS -->
+            <div class="col-span-full py-20 bg-white dark:bg-slate-800 neo-border neo-shadow rounded-3xl flex flex-col items-center justify-center">
+                <div class="w-16 h-16 border-4 border-dashed border-slate-300 dark:border-slate-600 rounded-full animate-spin-slow mb-4"></div>
+                <h3 class="text-2xl font-black">Memuat Galeri...</h3>
             </div>
         </div>
     </section>
 
     <!-- FAQ Section -->
-    <section id="faq" class="py-24 bg-white relative">
-        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16 fade-in-up">
-                <h2 class="text-3xl font-bold text-slate-900 mb-4">Pertanyaan Umum (FAQ)</h2>
-                <div class="w-24 h-1.5 bg-purple-600 mx-auto rounded-full"></div>
-            </div>
+    <section id="faq" class="py-24 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+        <div class="text-center mb-16">
+            <h2 class="text-5xl md:text-7xl font-black uppercase mb-4" style="text-shadow: 4px 4px 0px #FFD166;">Pertanyaan?</h2>
+            <p class="text-xl font-bold font-sans text-slate-600 dark:text-slate-400">Semua info yang mungkin Anda cari.</p>
+        </div>
 
-            <div class="space-y-4" id="faq-container">
-                <!-- FAQ Loaded via JS -->
-                <div class="text-center text-slate-400">Memuat pertanyaan...</div>
+        <div class="space-y-6" id="faq-container">
+            <!-- FAQ Loaded via JS -->
+            <div class="bg-white dark:bg-slate-800 neo-border neo-shadow rounded-2xl p-8 text-center">
+                <h3 class="text-2xl font-black">Mencari Data...</h3>
             </div>
         </div>
     </section>
 
-    <!-- Stats / CTA -->
-    <section class="py-24 bg-slate-900 text-white relative overflow-hidden">
-        <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-        <div class="absolute top-0 right-0 w-96 h-96 bg-blue-600 rounded-full blur-[100px] opacity-20"></div>
+    <!-- Big Bold CTA -->
+    <section class="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div class="bg-[#06D6A0] rounded-[3rem] p-12 md:p-20 text-center neo-border neo-shadow-large relative overflow-hidden">
+            <!-- Decorative circle -->
+            <div class="absolute -top-20 -right-20 w-64 h-64 bg-[#EF476F] rounded-full neo-border"></div>
+            <div class="absolute -bottom-20 -left-20 w-64 h-64 bg-[#FFD166] rotate-45 neo-border" style="border-radius: 20px;"></div>
 
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-            <h2 class="text-3xl md:text-4xl font-bold mb-8 fade-in-up">Siap Bergabung Bersama Kami?</h2>
-            <p class="text-slate-300 max-w-2xl mx-auto mb-12 text-lg fade-in-up">
-    Segera daftarkan putra-putri Anda dan jadilah bagian dari keluarga besar kami.
-            </p>
-            <div class="flex justify-center gap-4 fade-in-up">
-                <a href="daftar.html" class="px-8 py-4 bg-white text-slate-900 font-bold rounded-xl hover:bg-blue-50 transition transform hover:scale-105">
-                    Daftar Online
-                </a>
-                <a href="pengumuman.html" class="px-8 py-4 bg-transparent border border-slate-700 text-white font-bold rounded-xl hover:bg-slate-800 transition">
-                    Lihat Pengumuman
-                </a>
+            <div class="relative z-10">
+                <h2 class="text-5xl md:text-7xl font-black uppercase text-black mb-8" style="text-shadow: 3px 3px 0px white;">
+                    YUK GABUNG <br> SEKARANG JUGA!
+                </h2>
+                <div class="flex flex-col sm:flex-row justify-center gap-6">
+                    <a href="daftar.html" class="px-10 py-5 bg-black text-white font-black text-xl rounded-2xl neo-border border-white hover:scale-105 transition-transform shadow-[6px_6px_0px_0px_white]">
+                        DaftAR SEKARANG
+                    </a>
+                    <a href="pengumuman.html" class="px-10 py-5 bg-white text-black font-black text-xl rounded-2xl neo-border neo-shadow neo-hover">
+                        Cek Status
+                    </a>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- Footer -->
-    <footer class="bg-white border-t border-slate-200 py-12">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid md:grid-cols-4 gap-8 mb-8">
-                <div class="col-span-2">
-                    <div class="flex items-center gap-2 mb-4">
-                        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">SD</div>
-                        <span class="font-bold text-xl text-slate-900">SD INPRES LELINGLUAN</span>
+    <footer class="mt-20 bg-white dark:bg-slate-900 neo-border-t border-t-4 border-black dark:border-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-12">
+                <div class="lg:col-span-5">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-12 h-12 bg-[#EF476F] neo-border rounded-xl flex items-center justify-center text-white font-black text-xl">SD</div>
+                        <span class="font-black text-2xl uppercase tracking-tighter">SD INPRES LELINGLUAN</span>
                     </div>
-                    <p class="text-slate-500 text-sm leading-relaxed max-w-xs school-address-text">
-                        Jl. Wearnusmurin, Desa Lelingluan, Kec. Tanimbar Utara, Kabupaten Kepulauan Tanimbar.
+                    <p class="font-sans font-bold text-slate-600 dark:text-slate-400 max-w-sm text-lg school-address-text">
+                        Mewujudkan pendidikan dasar yang kreatif, berkarakter, dan berwawasan masa depan.
                     </p>
                 </div>
-                <div>
-                    <h4 class="font-bold text-slate-900 mb-4">Tautan Cepat</h4>
-                    <ul class="space-y-2 text-sm text-slate-500">
-                        <li><a href="index.html" class="hover:text-blue-600 transition">Beranda</a></li>
-                        <li><a href="daftar.html" class="hover:text-blue-600 transition">Pendaftaran</a></li>
-                        <li><a href="cek-status.html" class="hover:text-blue-600 transition">Cek Status Pendaftaran</a></li>
-                        <li><a href="pengumuman.html" class="hover:text-blue-600 transition">Pengumuman</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="font-bold text-slate-900 mb-4">Bantuan</h4>
-                    <ul class="space-y-2 text-sm text-slate-500">
-                        <li><a href="https://www.sdinpreslelingluan.com/2025/12/info-ppdb.html" class="hover:text-blue-600 transition">Panduan PPDB</a></li>
-                        <li><a href="https://www.sdinpreslelingluan.com/2025/12/info-ppdb.html" class="hover:text-blue-600 transition">Hubungi Kami</a></li>
-                        <li><a href="login.html" class="hover:text-blue-600 transition">Login Admin</a></li>
-                    </ul>
+                
+                <div class="lg:col-span-7 flex flex-wrap gap-12 md:gap-24">
+                    <div class="flex flex-col gap-4">
+                        <span class="font-black text-xl mb-2">MENU</span>
+                        <a href="index.html" class="font-bold text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white transition-colors underline decoration-2 underline-offset-4 decoration-transparent hover:decoration-[#FFD166]">Beranda</a>
+                        <a href="daftar.html" class="font-bold text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white transition-colors underline decoration-2 underline-offset-4 decoration-transparent hover:decoration-[#06D6A0]">Pendaftaran</a>
+                        <a href="#fitur" class="font-bold text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white transition-colors underline decoration-2 underline-offset-4 decoration-transparent hover:decoration-[#118AB2]">Keunggulan</a>
+                    </div>
+                    <div class="flex flex-col gap-4">
+                        <span class="font-black text-xl mb-2">INFO</span>
+                        <a href="pengumuman.html" class="font-bold text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white transition-colors underline decoration-2 underline-offset-4 decoration-transparent hover:decoration-[#EF476F]">Pengumuman</a>
+                        <a href="cek-status.html" class="font-bold text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white transition-colors underline decoration-2 underline-offset-4 decoration-transparent hover:decoration-[#FFD166]">Cek Status</a>
+                        <a href="login.html" class="font-bold text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white transition-colors underline decoration-2 underline-offset-4 decoration-transparent hover:decoration-[#06D6A0]">Login Admin</a>
+                    </div>
                 </div>
             </div>
-            <div class="border-t border-slate-100 pt-8 text-center text-sm text-slate-400">
-                &copy; 2026 SD Inpres Lelingluan. Dibuat dengan 💖 oleh Edward Domakubun
+            
+            <div class="pt-8 border-t-4 border-black dark:border-white flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="font-bold">&copy; 2026 SD Inpres Lelingluan.</p>
+                <p class="font-bold font-sans text-sm">Designed with 💖 by Edward Domakubun</p>
             </div>
         </div>
     </footer>
