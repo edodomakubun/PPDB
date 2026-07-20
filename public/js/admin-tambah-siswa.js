@@ -134,8 +134,11 @@ function renderForm() {
             inputHTML = `<input type="${inputType}" name="${field.name}" ${reqAttr} class="${commonClass}" placeholder="Masukkan ${field.label}">`;
         }
 
+        const isFullWidth = field.type === 'textarea' || field.name === 'alamat';
+        const gridClass = isFullWidth ? 'md:col-span-2' : '';
+
         const fieldHTML = `
-            <div class="mb-4">
+            <div class="mb-4 ${gridClass}">
                 <label class="block text-sm font-semibold text-slate-700 mb-2">
                     ${field.label} ${field.required ? '<span class="text-red-500">*</span>' : ''}
                 </label>
