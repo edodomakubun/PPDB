@@ -47,57 +47,102 @@
         <!-- Dashboard Content Body -->
         <main class="max-w-7xl mx-auto px-8 py-8 w-full">
 
-            <!-- Statistics Section -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition">
-                    <div class="text-slate-500 text-xs font-bold uppercase tracking-wider">Total Pendaftar</div>
-                    <div class="text-3xl font-black text-slate-900 mt-2" id="stat-total">0</div>
+            <!-- Statistics Cards Row -->
+            <div class="grid grid-cols-4 gap-2 sm:gap-6 mb-8">
+                <div class="bg-white p-3 sm:p-6 rounded-xl sm:rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-center text-center sm:text-left transition hover:shadow-md">
+                    <div class="text-slate-400 text-[9px] sm:text-xs font-bold uppercase tracking-wider truncate">Total</div>
+                    <div class="text-lg sm:text-3xl font-black text-slate-900 mt-1 sm:mt-2" id="stat-total">0</div>
                 </div>
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition">
-                    <div class="text-slate-500 text-xs font-bold uppercase tracking-wider">Diterima</div>
-                    <div class="text-3xl font-black text-green-600 mt-2" id="stat-accepted">0</div>
+                <div class="bg-white p-3 sm:p-6 rounded-xl sm:rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-center text-center sm:text-left transition hover:shadow-md">
+                    <div class="text-slate-400 text-[9px] sm:text-xs font-bold uppercase tracking-wider truncate">Diterima</div>
+                    <div class="text-lg sm:text-3xl font-black text-green-600 mt-1 sm:mt-2" id="stat-accepted">0</div>
                 </div>
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition">
-                    <div class="text-slate-500 text-xs font-bold uppercase tracking-wider">Ditolak</div>
-                    <div class="text-3xl font-black text-red-600 mt-2" id="stat-rejected">0</div>
+                <div class="bg-white p-3 sm:p-6 rounded-xl sm:rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-center text-center sm:text-left transition hover:shadow-md">
+                    <div class="text-slate-400 text-[9px] sm:text-xs font-bold uppercase tracking-wider truncate">Ditolak</div>
+                    <div class="text-lg sm:text-3xl font-black text-red-600 mt-1 sm:mt-2" id="stat-rejected">0</div>
                 </div>
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition">
-                    <div class="text-slate-500 text-xs font-bold uppercase tracking-wider">Menunggu</div>
-                    <div class="text-3xl font-black text-yellow-600 mt-2" id="stat-pending">0</div>
+                <div class="bg-white p-3 sm:p-6 rounded-xl sm:rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-center text-center sm:text-left transition hover:shadow-md">
+                    <div class="text-slate-400 text-[9px] sm:text-xs font-bold uppercase tracking-wider truncate">Menunggu</div>
+                    <div class="text-lg sm:text-3xl font-black text-yellow-600 mt-1 sm:mt-2" id="stat-pending">0</div>
                 </div>
             </div>
 
-            <!-- Charts & Controls Row -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-                <!-- Charts Area -->
-                <div class="lg:col-span-2 bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-                    <h3 class="text-lg font-bold text-slate-900 mb-6">Statistik Pendaftaran</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="h-60 flex justify-center">
-                            <canvas id="statusChart"></canvas>
-                        </div>
-                        <div class="h-60 flex justify-center">
-                            <canvas id="genderChart"></canvas>
-                        </div>
-                    </div>
+            <!-- Statistics Tables Row -->
+            <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200 mb-8">
+                <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
+                    <h3 class="text-sm sm:text-base font-bold text-slate-900">Rincian Statistik Pendaftaran</h3>
+                    <span class="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold">Real-time</span>
                 </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Table 1: Status Pendaftaran -->
+                    <div class="overflow-hidden border border-slate-100 rounded-xl">
+                        <table class="min-w-full divide-y divide-slate-100 text-xs sm:text-sm">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 font-bold">
+                                    <th class="px-3 py-2 text-left">Status</th>
+                                    <th class="px-3 py-2 text-right">Jumlah</th>
+                                    <th class="px-3 py-2 text-right">Persentase</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+                                <tr>
+                                    <td class="px-3 py-2.5 flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                                        Diterima
+                                    </td>
+                                    <td class="px-3 py-2.5 text-right font-bold text-green-600" id="tbl-accepted">0</td>
+                                    <td class="px-3 py-2.5 text-right text-slate-400 font-normal" id="pct-accepted">0%</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-3 py-2.5 flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                                        Ditolak
+                                    </td>
+                                    <td class="px-3 py-2.5 text-right font-bold text-red-600" id="tbl-rejected">0</td>
+                                    <td class="px-3 py-2.5 text-right text-slate-400 font-normal" id="pct-rejected">0%</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-3 py-2.5 flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
+                                        Menunggu Verifikasi
+                                    </td>
+                                    <td class="px-3 py-2.5 text-right font-bold text-yellow-600" id="tbl-pending">0</td>
+                                    <td class="px-3 py-2.5 text-right text-slate-400 font-normal" id="pct-pending">0%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
 
-                <!-- Settings Area -->
-                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-                    <h3 class="text-lg font-bold text-slate-900 mb-6">Status Pendaftaran</h3>
-
-                    <div class="mb-4">
-                        <div class="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-200">
-                            <span id="status-label" class="text-sm font-bold text-green-600 flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                                Buka
-                            </span>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="toggle-registration" class="sr-only peer">
-                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                            </label>
-                        </div>
-                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Jika dimatikan, form pendaftaran tidak akan muncul di halaman publik.</p>
+                    <!-- Table 2: Jenis Kelamin -->
+                    <div class="overflow-hidden border border-slate-100 rounded-xl">
+                        <table class="min-w-full divide-y divide-slate-100 text-xs sm:text-sm">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 font-bold">
+                                    <th class="px-3 py-2 text-left">Jenis Kelamin</th>
+                                    <th class="px-3 py-2 text-right">Jumlah</th>
+                                    <th class="px-3 py-2 text-right">Persentase</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+                                <tr>
+                                    <td class="px-3 py-2.5 flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                                        Laki-laki
+                                    </td>
+                                    <td class="px-3 py-2.5 text-right font-bold text-blue-600" id="tbl-male">0</td>
+                                    <td class="px-3 py-2.5 text-right text-slate-400 font-normal" id="pct-male">0%</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-3 py-2.5 flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-pink-500"></span>
+                                        Perempuan
+                                    </td>
+                                    <td class="px-3 py-2.5 text-right font-bold text-pink-600" id="tbl-female">0</td>
+                                    <td class="px-3 py-2.5 text-right text-slate-400 font-normal" id="pct-female">0%</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>

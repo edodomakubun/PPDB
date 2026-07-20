@@ -77,6 +77,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (!session) return;
 
+        // Load and update registration status badge
+        fetchAndUpdateSidebarBadge();
+
         // Set User Email and Logout Handler globally
         if (sidebarContainer) {
             const emailEl = sidebarContainer.querySelector('#user-email');
@@ -277,5 +280,106 @@ async function handleGlobalAnnouncementDelete() {
             console.error('Failed to delete global announcement:', err);
             Swal.fire('Gagal', 'Terjadi kesalahan saat menghapus pengumuman.', 'error');
         }
+    }
+}
+
+// --- Global Registration Status Badge & Modal Handling ---
+
+async function fetchAndUpdateSidebarBadge() {
+    try {
+        const { data, error } = await supabaseClient
+            .from('app_settings')
+            .select('value')
+            .eq('key', 'registration_status')
+            .single();
+
+        if (error) throw error;
+        if (data) {
+            const isOpen = data.value === 'open';
+            updateSidebarRegBadge(isOpen);
+        }
+    } catch (err) {
+        console.warn('Error loading registration status for sidebar:', err);
+    }
+}
+
+function updateSidebarRegBadge(isOpen) {
+    const badge = document.getElementById('sidebar-reg-badge');
+    if (badge) {
+        if (isOpen) {
+            badge.innerText = 'Buka';
+            badge.className = 'ml-auto text-[10px] px-2.5 py-0.5 rounded-full font-bold bg-green-500/20 text-green-400';
+        } else {
+            badge.innerText = 'Tutup';
+            badge.className = 'ml-auto text-[10px] px-2.5 py-0.5 rounded-full font-bold bg-red-500/20 text-red-400';
+        }
+    }
+}
+
+window.openRegistrationStatusModal = async () => {
+    try {
+        Swal.fire({
+            title: 'Memuat status...',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        const { data, error } = await supabaseClient
+            .from('app_settings')
+            .select('value')
+            .eq('key', 'registration_status')
+            .single();
+
+        if (error) throw error;
+
+        const isOpen = data && data.value === 'open';
+        
+        Swal.fire({
+            title: 'Status Pendaftaran PPDB',
+            html: `
+                <div class="flex flex-col items-center gap-4 py-4">
+                    <p class="text-sm text-slate-500 text-center">Aktifkan atau matikan formulir pendaftaran PPDB untuk publik secara langsung.</p>
+                    <label class="relative inline-flex items-center cursor-pointer select-none">
+                        <input type="checkbox" id="modal-toggle-reg" class="sr-only peer" ${isOpen ? 'checked' : ''}>
+                        <div class="w-14 h-7 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-green-600"></div>
+                        <span id="modal-status-label" class="ml-3 text-sm font-bold text-slate-700">${isOpen ? 'Buka (Aktif)' : 'Tutup (Non-Aktif)'}</span>
+                    </label>
+                </div>
+            `,
+            showCancelButton: false,
+            confirmButtonText: 'Selesai',
+            customClass: {
+                confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-xl transition cursor-pointer'
+            },
+            didOpen: () => {
+                const toggle = document.getElementById('modal-toggle-reg');
+                const label = document.getElementById('modal-status-label');
+                toggle.addEventListener('change', async (e) => {
+                    const checked = e.target.checked;
+                    const newStatus = checked ? 'open' : 'close';
+                    label.innerText = checked ? 'Buka (Aktif)' : 'Tutup (Non-Aktif)';
+                    
+                    try {
+                        const { error: updateError } = await supabaseClient
+                            .from('app_settings')
+                            .upsert({ key: 'registration_status', value: newStatus });
+                        
+                        if (updateError) throw updateError;
+                        
+                        // Update badge in sidebar
+                        updateSidebarRegBadge(checked);
+                        
+                        // Log activity
+                        await logActivity('UPDATE_REGISTRATION_STATUS', `Mengubah status pendaftaran menjadi ${newStatus === 'open' ? 'Buka' : 'Tutup'}`);
+                    } catch (err) {
+                        console.error('Failed to update status:', err);
+                        Swal.showValidationMessage(`Gagal memperbarui status: ${err.message}`);
+                    }
+                });
+            }
+        });
+    } catch (err) {
+        console.error(err);
+        Swal.fire('Gagal', 'Gagal memuat status pendaftaran.', 'error');
     }
 }
