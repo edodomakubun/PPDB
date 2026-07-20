@@ -64,36 +64,46 @@ document.addEventListener('DOMContentLoaded', async () => {
             announcementText = "Pemberitahuan khusus panitia: Belum ada pengumuman. Klik 'Buat/Ubah' untuk menulis catatan baru.";
         }
 
-        // Find navbar to insert the banner right below it
+        // Find target element
+        const customRoot = document.getElementById('announcement-banner-root');
         const nav = document.querySelector('nav');
-        if (nav) {
-            const bannerHTML = `
-                <div id="global-admin-announcement" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-                    <div class="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3 shadow-sm">
-                        <div class="p-1 bg-amber-100 text-amber-800 rounded-lg shrink-0 mt-0.5">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                        </div>
-                        <div class="flex-1">
-                            <span class="text-xs font-bold uppercase tracking-wider text-amber-800">Pengumuman Internal Panitia</span>
-                            <p id="global-announcement-text" class="text-sm text-amber-900 mt-1 leading-relaxed font-medium">
-                                ${announcementText}
-                            </p>
-                        </div>
-                        ${isSuperAdmin ? `
-                            <div class="flex items-center gap-2 shrink-0">
-                                <button id="btn-edit-global-announcement" class="px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-800 hover:text-amber-900 rounded-xl transition text-xs font-bold flex items-center gap-1.5 cursor-pointer">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                                    Buat/Ubah
-                                </button>
-                                <button id="btn-delete-global-announcement" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 rounded-xl transition text-xs font-bold flex items-center gap-1.5 cursor-pointer ${announcementText.startsWith('Pemberitahuan khusus panitia:') ? 'hidden' : ''}">
-                                    Hapus
-                                </button>
-                            </div>
-                        ` : ''}
+        if (customRoot || nav) {
+            const bannerInnerHTML = `
+                <div class="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3 shadow-sm">
+                    <div class="p-1 bg-amber-100 text-amber-800 rounded-lg shrink-0 mt-0.5">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                     </div>
+                    <div class="flex-1">
+                        <span class="text-xs font-bold uppercase tracking-wider text-amber-800">Pengumuman Internal Panitia</span>
+                        <p id="global-announcement-text" class="text-sm text-amber-900 mt-1 leading-relaxed font-medium">
+                            ${announcementText}
+                        </p>
+                    </div>
+                    ${isSuperAdmin ? `
+                        <div class="flex items-center gap-2 shrink-0">
+                            <button id="btn-edit-global-announcement" class="px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-800 hover:text-amber-900 rounded-xl transition text-xs font-bold flex items-center gap-1.5 cursor-pointer">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></svg>
+                                Buat/Ubah
+                            </button>
+                            <button id="btn-delete-global-announcement" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 rounded-xl transition text-xs font-bold flex items-center gap-1.5 cursor-pointer ${announcementText.startsWith('Pemberitahuan khusus panitia:') ? 'hidden' : ''}">
+                                Hapus
+                            </button>
+                        </div>
+                    ` : ''}
                 </div>
             `;
-            nav.insertAdjacentHTML('afterend', bannerHTML);
+
+            if (customRoot) {
+                customRoot.innerHTML = bannerInnerHTML;
+                customRoot.classList.remove('hidden');
+            } else if (nav) {
+                const bannerHTML = `
+                    <div id="global-admin-announcement" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+                        ${bannerInnerHTML}
+                    </div>
+                `;
+                nav.insertAdjacentHTML('afterend', bannerHTML);
+            }
 
             if (isSuperAdmin) {
                 document.getElementById('btn-edit-global-announcement').addEventListener('click', handleGlobalAnnouncementEdit);

@@ -19,6 +19,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = '../login.html';
     });
 
+    // Mobile Sidebar Toggle
+    const btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
+    const sidebar = document.getElementById('sidebar');
+
+    if (btnToggleSidebar && sidebar) {
+        btnToggleSidebar.addEventListener('click', (e) => {
+            e.stopPropagation();
+            sidebar.classList.toggle('-translate-x-full');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!sidebar.classList.contains('-translate-x-full') && !sidebar.contains(e.target) && !btnToggleSidebar.contains(e.target)) {
+                sidebar.classList.add('-translate-x-full');
+            }
+        });
+    }
+
     // Initial Data Load
     await loadData();
     await loadSettings();
