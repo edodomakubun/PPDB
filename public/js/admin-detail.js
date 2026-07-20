@@ -1,6 +1,7 @@
 let currentData = null;
 let isEditMode = false;
 let studentId = null;
+let formFields = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. Check Auth
@@ -40,18 +41,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function loadStudentData(id) {
     try {
+        // Fetch Form Fields first
+        const { data: fieldsData, error: fieldsError } = await supabaseClient
+            .from('form_fields')
+            .select('*')
+            .order('order_index', { ascending: true });
+
+        if (fieldsError) throw fieldsError;
+        formFields = fieldsData || [];
+
         const { data, error } = await supabaseClient
             .from('pendaftaran')
             .select('*')
-            .eq('id', id) // Supabase handles UUID/text conversion usually, but strict check might fail if types mismatch in some clients.
-                          // However, here 'id' is from URL (string) and DB is UUID. Supabase JS client handles this fine.
+            .eq('id', id)
             .single();
 
         if (error) throw error;
         if (!data) throw new Error('Data tidak ditemukan');
 
         currentData = data;
-        renderForm(currentData);
+        await renderForm(currentData);
 
         document.getElementById('loading-indicator').classList.add('hidden');
         document.getElementById('form-edit').classList.remove('hidden');
@@ -94,6 +103,78 @@ async function renderForm(item) {
         </div>
         `;
     };
+
+    // Filter out known static fields to identify dynamic custom fields
+    const knownColumns = [
+        'nama_lengkap', 'nik', 'tempat_lahir', 'tanggal_lahir',
+        'jenis_kelamin', 'agama', 'alamat', 'asal_sekolah',
+        'nama_ayah', 'pekerjaan_ayah', 'nama_ibu', 'pekerjaan_ibu', 'no_hp'
+    ];
+    const fileFields = ['file_foto', 'file_kk', 'file_akte'];
+    const customFields = formFields.filter(f => !knownColumns.includes(f.name) && !fileFields.includes(f.name));
+
+    let customFieldsHTML = '';
+    if (customFields.length > 0) {
+        customFieldsHTML = `
+            <div class="mt-8 border-t border-slate-200 pt-6">
+                <h3 class="text-lg font-bold text-slate-900 mb-6 pb-2 border-b border-slate-200">Data Tambahan (Dinamis)</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        `;
+
+        for (const field of customFields) {
+            const val = item.custom_data ? item.custom_data[field.name] : '';
+            if (field.type === 'file') {
+                const fileUrl = val ? await getUrl(val) : '#';
+                customFieldsHTML += `
+                    <div class="mb-4 p-4 border border-slate-200 rounded-xl bg-slate-50 flex items-center justify-between">
+                        <div>
+                            <span class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">${field.label}</span>
+                            ${val ? `<a href="${fileUrl}" target="_blank" class="text-sm font-semibold text-blue-600 hover:underline">Buka Berkas</a>` : '<span class="text-sm text-slate-400">Belum diunggah</span>'}
+                        </div>
+                        ${field.required ? '<span class="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold">Wajib</span>' : ''}
+                    </div>
+                `;
+            } else if (field.type === 'textarea') {
+                customFieldsHTML += `
+                    <div class="mb-4 col-span-full">
+                        <label class="block text-sm font-semibold text-slate-600 mb-1">${field.label}</label>
+                        <textarea name="${field.name}" class="data-field w-full px-4 py-2 border border-slate-300 rounded-lg text-slate-900 bg-slate-50 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" rows="3" disabled>${val || ''}</textarea>
+                    </div>
+                `;
+            } else if (field.type === 'select') {
+                const options = field.options ? field.options.split(',') : [];
+                const optionsHTML = options.map(o => {
+                    const cleanOpt = o.trim();
+                    const selected = cleanOpt === String(val).trim() ? 'selected' : '';
+                    return `<option value="${cleanOpt}" ${selected}>${cleanOpt}</option>`;
+                }).join('');
+
+                customFieldsHTML += `
+                    <div class="mb-4">
+                        <label class="block text-sm font-semibold text-slate-600 mb-1">${field.label}</label>
+                        <select name="${field.name}" class="data-field w-full px-4 py-2 border border-slate-300 rounded-lg text-slate-900 bg-slate-50 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" disabled>
+                            <option value="">Pilih ${field.label}...</option>
+                            ${optionsHTML}
+                        </select>
+                    </div>
+                `;
+            } else {
+                const inputType = field.type === 'number' ? 'number' : (field.type === 'date' ? 'date' : 'text');
+                const safeVal = val ? String(val).replace(/"/g, '&quot;') : '';
+                customFieldsHTML += `
+                    <div class="mb-4">
+                        <label class="block text-sm font-semibold text-slate-600 mb-1">${field.label}</label>
+                        <input type="${inputType}" name="${field.name}" value="${safeVal}" class="data-field w-full px-4 py-2 border border-slate-300 rounded-lg text-slate-900 bg-slate-50 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" disabled>
+                    </div>
+                `;
+            }
+        }
+
+        customFieldsHTML += `
+                </div>
+            </div>
+        `;
+    }
 
     container.innerHTML = `
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -159,6 +240,7 @@ async function renderForm(item) {
                 </div>
             </div>
         </div>
+        ${customFieldsHTML}
     `;
 }
 
@@ -224,11 +306,25 @@ async function saveEdit() {
         const form = document.getElementById('form-edit');
         const formData = new FormData(form);
         const updates = {};
+        const customData = { ...(currentData.custom_data || {}) };
 
-        // Collect updated fields
+        const knownColumns = [
+            'nama_lengkap', 'nik', 'tempat_lahir', 'tanggal_lahir',
+            'jenis_kelamin', 'agama', 'alamat', 'asal_sekolah',
+            'nama_ayah', 'pekerjaan_ayah', 'nama_ibu', 'pekerjaan_ibu', 'no_hp'
+        ];
+
+        // Collect updated fields, routing unknown ones to customData
         formData.forEach((value, key) => {
-            updates[key] = value;
+            if (knownColumns.includes(key)) {
+                updates[key] = value;
+            } else {
+                customData[key] = value;
+            }
         });
+
+        // Attach customData to updates object
+        updates.custom_data = customData;
 
         const { error } = await supabaseClient
             .from('pendaftaran')

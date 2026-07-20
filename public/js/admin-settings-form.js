@@ -4,7 +4,17 @@ let sortable = null;
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. Check Auth
     const { data: { session } } = await supabaseClient.auth.getSession();
-    if (!session) window.location.href = '../login.html';
+    if (!session) {
+        window.location.href = '../login.html';
+        return;
+    }
+
+    // Set Admin Email & Logout handler
+    document.getElementById('user-email').innerText = session.user.email;
+    document.getElementById('btn-logout').addEventListener('click', async () => {
+        await supabaseClient.auth.signOut();
+        window.location.href = '../login.html';
+    });
 
     // 2. Load Fields
     await loadFields();

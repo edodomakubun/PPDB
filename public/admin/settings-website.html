@@ -11,23 +11,26 @@
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Inter', sans-serif; }</style>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased">
+<body class="bg-slate-50 text-slate-800 antialiased selection:bg-blue-200 selection:text-blue-900">
 
     <!-- Navbar -->
-    <nav class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-40">
+    <nav class="bg-white/80 backdrop-blur-lg shadow-sm border-b border-slate-200 sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
+            <div class="flex justify-between h-20 items-center">
                 <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">SD</div>
-                    <span class="font-bold text-lg text-slate-900">Panel Panitia</span>
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/30">SD</div>
+                    <span class="font-bold text-lg text-slate-900">Panel Panitia <span class="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full ml-2">2026</span></span>
                 </div>
                 <div class="flex items-center gap-4">
-                    <span id="user-email" class="text-sm text-slate-500 hidden sm:block"></span>
-                    <a href="dashboard.html" class="text-sm font-medium text-slate-600 hover:text-blue-600 transition">Dashboard</a>
-                    <button id="btn-logout" class="text-sm font-medium text-red-600 hover:text-red-700 transition">Logout</button>
+                    <span id="user-email" class="text-sm text-slate-500 hidden sm:block font-medium"></span>
+                    <a href="dashboard.html" class="text-sm font-semibold text-slate-600 hover:text-blue-600 transition">Dashboard</a>
+                    <a href="users.html" class="text-sm font-semibold text-slate-600 hover:text-blue-600 transition">Atur Panitia</a>
+                    <button id="btn-logout" class="text-sm font-semibold text-red-600 hover:text-red-700 transition px-4 py-2 hover:bg-red-50 rounded-lg">
+                        Logout
+                    </button>
                 </div>
             </div>
         </div>
@@ -35,12 +38,12 @@
 
     <main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div class="mb-8">
-            <a href="dashboard.html" class="text-slate-500 hover:text-blue-600 text-sm mb-2 inline-flex items-center">
+            <a href="dashboard.html" class="text-slate-500 hover:text-blue-600 text-sm mb-2 inline-flex items-center font-medium">
                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                 Kembali ke Dashboard
             </a>
             <h1 class="text-2xl font-bold text-slate-900">Konfigurasi Website & PDF</h1>
-            <p class="text-slate-500">Atur informasi sekolah yang akan tampil di website dan dokumen PDF.</p>
+            <p class="text-slate-500 text-sm mt-1">Atur informasi sekolah yang akan tampil di website dan dokumen PDF.</p>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -50,31 +53,31 @@
                     <!-- Logo URL -->
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">URL Logo Sekolah</label>
-                        <input type="url" id="logo_url" name="logo_url" placeholder="https://example.com/logo.png" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition">
-                        <p class="text-xs text-slate-500 mt-1">Tempel tautan gambar logo (format .png atau .jpg). Gunakan hosting gambar gratis jika perlu.</p>
+                        <input type="url" id="logo_url" name="logo_url" placeholder="https://example.com/logo.png" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-600 outline-none transition bg-slate-50 focus:bg-white text-sm">
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Tempel tautan gambar logo (format .png atau .jpg). Gunakan hosting gambar gratis jika perlu.</p>
                     </div>
 
                     <!-- Nama Sekolah -->
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Nama Sekolah</label>
-                        <input type="text" id="nama_sekolah" name="nama_sekolah" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition">
+                        <input type="text" id="nama_sekolah" name="nama_sekolah" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-600 outline-none transition bg-slate-50 focus:bg-white text-sm">
                     </div>
 
                     <!-- Alamat Sekolah -->
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Alamat Sekolah</label>
-                        <textarea id="alamat" name="alamat" rows="3" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"></textarea>
+                        <textarea id="alamat" name="alamat" rows="3" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-600 outline-none transition bg-slate-50 focus:bg-white text-sm"></textarea>
                     </div>
 
                     <!-- Kepala Sekolah -->
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Nama Kepala Sekolah</label>
-                        <input type="text" id="kepala_sekolah" name="kepala_sekolah" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition">
+                        <input type="text" id="kepala_sekolah" name="kepala_sekolah" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-600 outline-none transition bg-slate-50 focus:bg-white text-sm">
                     </div>
 
                     <!-- Submit Button -->
                     <div class="pt-6 border-t border-slate-100 flex justify-end">
-                        <button type="submit" id="btn-save" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold shadow-md transition transform hover:-translate-y-0.5">
+                        <button type="submit" id="btn-save" class="px-6 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold shadow-md shadow-blue-500/20 transition transform hover:-translate-y-0.5 text-sm">
                             Simpan Perubahan
                         </button>
                     </div>
@@ -88,7 +91,17 @@
         document.addEventListener('DOMContentLoaded', async () => {
             // Check Auth
             const { data: { session } } = await supabaseClient.auth.getSession();
-            if (!session) window.location.href = '../login.html';
+            if (!session) {
+                window.location.href = '../login.html';
+                return;
+            }
+
+            // Set Admin Email & Logout handler
+            document.getElementById('user-email').innerText = session.user.email;
+            document.getElementById('btn-logout').addEventListener('click', async () => {
+                await supabaseClient.auth.signOut();
+                window.location.href = '../login.html';
+            });
 
             // Load Settings
             loadSettings();
