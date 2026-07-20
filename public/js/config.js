@@ -35,9 +35,61 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!window.location.pathname.includes('/admin/')) return;
 
     try {
+        // Load Sidebar dynamically
+        const sidebarContainer = document.getElementById('sidebar-container');
+        if (sidebarContainer) {
+            const sidebarRes = await fetch('sidebar.html');
+            if (sidebarRes.ok) {
+                const sidebarHTML = await sidebarRes.text();
+                sidebarContainer.innerHTML = sidebarHTML;
+
+                // Highlight active link
+                const currentPath = window.location.pathname;
+                const links = sidebarContainer.querySelectorAll('nav a');
+                links.forEach(link => {
+                    const href = link.getAttribute('href');
+                    if (href && currentPath.includes(href)) {
+                        link.classList.add('bg-blue-600', 'text-white');
+                        link.classList.remove('hover:bg-slate-800', 'hover:text-white');
+                    }
+                });
+
+                // Mobile Sidebar Toggle
+                const btnToggleSidebar = sidebarContainer.querySelector('#btn-toggle-sidebar');
+                const sidebar = sidebarContainer.querySelector('#sidebar');
+
+                if (btnToggleSidebar && sidebar) {
+                    btnToggleSidebar.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        sidebar.classList.toggle('-translate-x-full');
+                    });
+
+                    document.addEventListener('click', (e) => {
+                        if (!sidebar.classList.contains('-translate-x-full') && !sidebar.contains(e.target) && !btnToggleSidebar.contains(e.target)) {
+                            sidebar.classList.add('-translate-x-full');
+                        }
+                    });
+                }
+            }
+        }
+
         // Get session
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (!session) return;
+
+        // Set User Email and Logout Handler globally
+        if (sidebarContainer) {
+            const emailEl = sidebarContainer.querySelector('#user-email');
+            if (emailEl) emailEl.innerText = session.user.email;
+
+            const logoutBtn = sidebarContainer.querySelector('#btn-logout');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async () => {
+                    await supabaseClient.auth.signOut();
+                    window.location.href = '../login.html';
+                });
+            }
+        }
 
         const userEmail = session.user.email;
         const isSuperAdmin = userEmail === 'admin@sekolah.id';

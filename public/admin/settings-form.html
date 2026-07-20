@@ -20,29 +20,27 @@
         .ghost-class { opacity: 0.5; background: #f0f9ff; border: 2px dashed #3b82f6; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased selection:bg-blue-200 selection:text-blue-900">
+<body class="bg-slate-50 text-slate-800 antialiased selection:bg-blue-200 selection:text-blue-900 flex h-screen overflow-hidden">
 
-    <!-- Navbar -->
-    <nav class="bg-white/80 backdrop-blur-lg shadow-sm border-b border-slate-200 sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-20 items-center">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/30">SD</div>
-                    <span class="font-bold text-lg text-slate-900">Panel Panitia <span class="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full ml-2">2026</span></span>
-                </div>
-                <div class="flex items-center gap-4">
-                    <span id="user-email" class="text-sm text-slate-500 hidden sm:block font-medium"></span>
-                    <a href="dashboard.html" class="text-sm font-semibold text-slate-600 hover:text-blue-600 transition">Dashboard</a>
-                    <a href="users.html" class="text-sm font-semibold text-slate-600 hover:text-blue-600 transition">Atur Panitia</a>
-                    <button id="btn-logout" class="text-sm font-semibold text-red-600 hover:text-red-700 transition px-4 py-2 hover:bg-red-50 rounded-lg">
-                        Logout
-                    </button>
-                </div>
+    <!-- Dynamic Sidebar Container -->
+    <div id="sidebar-container" class="shrink-0"></div>
+
+    <!-- Main Content Panel -->
+    <div class="flex-1 flex flex-col h-screen overflow-y-auto pt-16 md:pt-0">
+        
+        <!-- Header / Top Bar -->
+        <header class="bg-white border-b border-slate-200 py-6 px-8 hidden md:flex justify-between items-center shrink-0">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-900">Konfigurasi Formulir</h1>
+                <p class="text-slate-500 text-xs mt-1">Kelola pertanyaan kustom dinamis untuk formulir pendaftaran.</p>
             </div>
-        </div>
-    </nav>
+        </header>
 
-    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Dynamic Global Admin Announcement Container -->
+        <div id="announcement-banner-root" class="max-w-7xl mx-auto px-8 mt-6 w-full hidden"></div>
+
+        <!-- Main Content -->
+        <main class="max-w-6xl mx-auto px-8 py-8 w-full">
         <div class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
                 <a href="dashboard.html" class="text-slate-500 hover:text-blue-600 text-sm mb-2 inline-flex items-center">
@@ -88,7 +86,8 @@
             </div>
 
         </div>
-    </main>
+        </main>
+    </div>
 
     <!-- Modal Add/Edit Field -->
     <div id="modal-field" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
