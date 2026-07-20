@@ -228,27 +228,88 @@ function exportToPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('l', 'mm', 'a4');
 
-    doc.setFontSize(16);
-    doc.text('Laporan Data Pendaftar Siswa Baru', 14, 15);
-    doc.setFontSize(10);
-    doc.text(`SD INPRES LELINGLUAN - ${new Date().toLocaleDateString('id-ID')}`, 14, 22);
+    doc.setFontSize(14);
+    doc.text('Laporan Data Pendaftar Siswa Baru', 8, 12);
+    doc.setFontSize(9);
+    doc.text(`SD INPRES LELINGLUAN - ${new Date().toLocaleDateString('id-ID')}`, 8, 18);
+
+    const formatBirthdate = (dateStr) => {
+        if (!dateStr) return '-';
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        return dateStr;
+    };
 
     const tableRows = allData.map((item, i) => [
         i + 1,
-        item.nik,
-        item.nama_lengkap,
-        item.jenis_kelamin,
-        item.asal_sekolah || '-',
-        item.status
+        item.nik || '-',
+        item.nama_lengkap || '-',
+        item.jenis_kelamin || '-',
+        item.tempat_lahir || '-',
+        formatBirthdate(item.tanggal_lahir),
+        item.agama || '-',
+        item.nama_ayah || '-',
+        item.pekerjaan_ayah || '-',
+        item.nama_ibu || '-',
+        item.pekerjaan_ibu || '-',
+        item.no_hp || '-',
+        item.alamat || '-',
+        item.asal_sekolah || '-'
     ]);
 
+    const headers = [
+        "NO URUT",
+        "NIK",
+        "NAMA",
+        "JENIS KELAMIN",
+        "TEMPAT LAHIR",
+        "TANGGAL LAHIR (DD/MM/YYYY)",
+        "AGAMA",
+        "NAMA AYAH",
+        "PEKERJAAN AYAH",
+        "NAMA IBU",
+        "PEKERJAAN IBU",
+        "NOMOR HP",
+        "ALAMAT",
+        "ASAL SEKOLAH"
+    ];
+
     doc.autoTable({
-        head: [["No", "NIK", "Nama Siswa", "JK", "Sekolah Asal", "Status"]],
+        head: [headers],
         body: tableRows,
-        startY: 28,
+        startY: 22,
+        margin: { left: 8, right: 8 },
         theme: 'grid',
-        styles: { fontSize: 8 },
-        headStyles: { fillColor: [37, 99, 235] }
+        styles: {
+            fontSize: 5.5,
+            cellPadding: 1,
+            valign: 'middle',
+            overflow: 'linebreak'
+        },
+        headStyles: {
+            fillColor: [37, 99, 235],
+            fontSize: 5.5,
+            fontStyle: 'bold',
+            halign: 'center'
+        },
+        columnStyles: {
+            0: { cellWidth: 8, halign: 'center' }, // NO URUT
+            1: { cellWidth: 18 },                  // NIK
+            2: { cellWidth: 26 },                  // NAMA
+            3: { cellWidth: 14 },                  // JENIS KELAMIN
+            4: { cellWidth: 16 },                  // TEMPAT LAHIR
+            5: { cellWidth: 18, halign: 'center' }, // TANGGAL LAHIR (DD/MM/YYYY)
+            6: { cellWidth: 12 },                  // AGAMA
+            7: { cellWidth: 18 },                  // NAMA AYAH
+            8: { cellWidth: 18 },                  // PEKERJAAN AYAH
+            9: { cellWidth: 18 },                  // NAMA IBU
+            10: { cellWidth: 18 },                 // PEKERJAAN IBU
+            11: { cellWidth: 18 },                 // NOMOR HP
+            12: { cellWidth: 32 },                 // ALAMAT
+            13: { cellWidth: 20 }                  // ASAL SEKOLAH
+        }
     });
 
     doc.save(`Laporan_PPDB_${new Date().toISOString().split('T')[0]}.pdf`);
