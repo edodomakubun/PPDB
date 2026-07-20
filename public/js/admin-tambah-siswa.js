@@ -8,13 +8,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // Set Admin Email & Logout handler
-    document.getElementById('user-email').innerText = session.user.email;
-    document.getElementById('btn-logout').addEventListener('click', async () => {
-        await supabaseClient.auth.signOut();
-        window.location.href = '../login.html';
-    });
-
     // 2. Load Form Fields
     await loadFormFields();
 

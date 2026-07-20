@@ -6,12 +6,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    document.getElementById('user-email').innerText = session.user.email;
-    document.getElementById('btn-logout').addEventListener('click', async () => {
-        await supabaseClient.auth.signOut();
-        window.location.href = '../login.html';
-    });
-
     loadUsers();
 });
 

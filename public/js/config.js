@@ -121,23 +121,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         const nav = document.querySelector('nav');
         if (customRoot || nav) {
             const bannerInnerHTML = `
-                <div class="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3 shadow-sm">
-                    <div class="p-1 bg-amber-100 text-amber-800 rounded-lg shrink-0 mt-0.5">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                    </div>
-                    <div class="flex-1">
-                        <span class="text-xs font-bold uppercase tracking-wider text-amber-800">Pengumuman Internal Panitia</span>
-                        <p id="global-announcement-text" class="text-sm text-amber-900 mt-1 leading-relaxed font-medium">
-                            ${announcementText}
-                        </p>
+                <div class="p-3.5 bg-amber-50/80 border border-amber-200 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-3.5 shadow-sm">
+                    <div class="flex items-start gap-3 flex-1 min-w-0">
+                        <div class="p-1.5 bg-amber-100 text-amber-800 rounded-xl shrink-0 mt-0.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                        </div>
+                        <div class="min-w-0">
+                            <span class="text-[10px] font-extrabold uppercase tracking-wider text-amber-800 bg-amber-100/50 px-2 py-0.5 rounded-md">Pengumuman Internal Panitia</span>
+                            <p id="global-announcement-text" class="text-xs text-amber-900 mt-1 leading-relaxed font-semibold whitespace-pre-line">
+                                ${announcementText}
+                            </p>
+                        </div>
                     </div>
                     ${isSuperAdmin ? `
-                        <div class="flex items-center gap-2 shrink-0">
-                            <button id="btn-edit-global-announcement" class="px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-800 hover:text-amber-900 rounded-xl transition text-xs font-bold flex items-center gap-1.5 cursor-pointer">
+                        <div class="flex items-center gap-2 shrink-0 w-full md:w-auto justify-end border-t md:border-t-0 border-amber-200/50 pt-2.5 md:pt-0">
+                            <button id="btn-edit-global-announcement" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl transition text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-sm shadow-amber-600/10">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></svg>
                                 Buat/Ubah
                             </button>
-                            <button id="btn-delete-global-announcement" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 rounded-xl transition text-xs font-bold flex items-center gap-1.5 cursor-pointer ${announcementText.startsWith('Pemberitahuan khusus panitia:') ? 'hidden' : ''}">
+                            <button id="btn-delete-global-announcement" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 rounded-xl transition text-xs font-bold flex items-center gap-1.5 cursor-pointer border border-red-200/30 ${announcementText.startsWith('Pemberitahuan khusus panitia:') ? 'hidden' : ''}">
                                 Hapus
                             </button>
                         </div>

@@ -10,13 +10,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // Display User Email
-    document.getElementById('user-email').innerText = session.user.email;
-    document.getElementById('btn-logout').addEventListener('click', async () => {
-        await supabaseClient.auth.signOut();
-        window.location.href = '../login.html';
-    });
-
     // 2. Check Mode (Add or Edit)
     const urlParams = new URLSearchParams(window.location.search);
     const userId = urlParams.get('id');

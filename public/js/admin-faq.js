@@ -3,12 +3,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (!session) window.location.href = '../login.html';
 
-    document.getElementById('user-email').innerText = session.user.email;
-    document.getElementById('btn-logout').addEventListener('click', async () => {
-        await supabaseClient.auth.signOut();
-        window.location.href = '../login.html';
-    });
-
     loadFaqs();
     initSortable();
 });
