@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tambah Siswa Baru - SD INPRES LELINGLUAN</title>
+    <!-- Tailwind CSS v4 -->
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased selection:bg-blue-200 selection:text-blue-900">
+
+    <!-- Navbar -->
+    <nav class="bg-white/80 backdrop-blur-lg shadow-sm border-b border-slate-200 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/30">SD</div>
+                    <span class="font-bold text-lg text-slate-900">Panel Panitia <span class="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full ml-2">2026</span></span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span id="user-email" class="text-sm text-slate-500 hidden sm:block font-medium"></span>
+                    <a href="dashboard.html" class="text-sm font-semibold text-slate-600 hover:text-blue-600 transition">Dashboard</a>
+                    <a href="users.html" class="text-sm font-semibold text-slate-600 hover:text-blue-600 transition">Atur Panitia</a>
+                    <button id="btn-logout" class="text-sm font-semibold text-red-600 hover:text-red-700 transition px-4 py-2 hover:bg-red-50 rounded-lg">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <div class="mb-8">
+            <a href="dashboard.html" class="text-slate-500 hover:text-blue-600 text-sm mb-2 inline-flex items-center font-medium">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                Kembali ke Dashboard
+            </a>
+            <h1 class="text-2xl font-bold text-slate-900">Tambah Siswa Baru (Manual)</h1>
+            <p class="text-slate-500 text-sm mt-1">Gunakan formulir ini untuk menambahkan data pendaftaran siswa baru secara mandiri.</p>
+        </div>
+
+        <form id="form-daftar" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            
+            <!-- Section 1: Data Siswa -->
+            <div class="p-6 sm:p-8 border-b border-slate-100">
+                <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-3">
+                    <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs font-bold">1</div>
+                    Data Pribadi Siswa
+                </h2>
+                <div id="section-identity" class="space-y-4">
+                    <div class="animate-pulse space-y-4">
+                        <div class="h-10 bg-slate-100 rounded-lg w-full"></div>
+                        <div class="h-10 bg-slate-100 rounded-lg w-full"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: Data Orang Tua -->
+            <div class="p-6 sm:p-8 border-b border-slate-100 bg-slate-50/30">
+                <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-3">
+                    <div class="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-xs font-bold">2</div>
+                    Data Orang Tua / Wali
+                </h2>
+                <div id="section-parents" class="space-y-4">
+                    <!-- Dynamic Content -->
+                </div>
+            </div>
+
+            <!-- Section 3: Berkas -->
+            <div class="p-6 sm:p-8 border-b border-slate-100">
+                <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-3">
+                    <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs font-bold">3</div>
+                    Berkas Lampiran
+                </h2>
+                <div id="section-files" class="space-y-4">
+                    <!-- Dynamic Content -->
+                </div>
+            </div>
+
+            <!-- Section 4: Data Tambahan -->
+            <div class="p-6 sm:p-8 border-b border-slate-100 bg-slate-50/30">
+                <div id="section-custom" class="space-y-4">
+                    <!-- Dynamic Content -->
+                </div>
+            </div>
+
+            <!-- Footer / Submit -->
+            <div class="p-6 sm:p-8 flex flex-col sm:flex-row justify-end items-center gap-4">
+                <p class="text-xs text-slate-400 text-center sm:text-left flex-1">
+                    Pastikan semua berkas dan isian data sudah sesuai sebelum menyimpan pendaftaran ini.
+                </p>
+                <button type="submit" id="btn-submit" class="w-full sm:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 text-sm">
+                    Simpan Pendaftaran
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </button>
+            </div>
+
+        </form>
+    </main>
+
+    <!-- Scripts -->
+    <script src="../js/config.js"></script>
+    <script src="../js/admin-tambah-siswa.js"></script>
+</body>
+</html>
