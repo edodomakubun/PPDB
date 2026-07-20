@@ -31,6 +31,45 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Toggle Registration
     document.getElementById('toggle-registration').addEventListener('change', toggleRegistrationStatus);
+
+    // Export Dropdown Click Handler
+    const btnExport = document.getElementById('btn-export-dropdown');
+    const menuExport = document.getElementById('export-dropdown-menu');
+    const chevronExport = document.getElementById('icon-export-chevron');
+
+    if (btnExport && menuExport) {
+        btnExport.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isHidden = menuExport.classList.contains('hidden');
+            if (isHidden) {
+                menuExport.classList.remove('hidden');
+                setTimeout(() => {
+                    menuExport.classList.remove('scale-95', 'opacity-0');
+                    menuExport.classList.add('scale-100', 'opacity-100');
+                }, 10);
+                if (chevronExport) chevronExport.classList.add('rotate-180');
+            } else {
+                menuExport.classList.remove('scale-100', 'opacity-100');
+                menuExport.classList.add('scale-95', 'opacity-0');
+                if (chevronExport) chevronExport.classList.remove('rotate-180');
+                setTimeout(() => {
+                    menuExport.classList.add('hidden');
+                }, 200);
+            }
+        });
+
+        // Click outside to close
+        document.addEventListener('click', (e) => {
+            if (!menuExport.classList.contains('hidden') && !btnExport.contains(e.target) && !menuExport.contains(e.target)) {
+                menuExport.classList.remove('scale-100', 'opacity-100');
+                menuExport.classList.add('scale-95', 'opacity-0');
+                if (chevronExport) chevronExport.classList.remove('rotate-180');
+                setTimeout(() => {
+                    menuExport.classList.add('hidden');
+                }, 200);
+            }
+        });
+    }
 });
 
 async function loadData() {
