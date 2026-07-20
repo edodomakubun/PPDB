@@ -21,6 +21,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 3. Render Form
     renderForm();
 
+    // 3b. Load Admin Announcement
+    await loadAdminAnnouncement();
+
+    // Bind Edit Button
+    const btnEditAnnouncement = document.getElementById('btn-edit-announcement');
+    if (btnEditAnnouncement) {
+        btnEditAnnouncement.addEventListener('click', handleEditAnnouncement);
+    }
+
     // 4. Handle Submit
     const form = document.getElementById('form-daftar');
     if (form) {
@@ -237,5 +246,93 @@ async function handleFormSubmit(e) {
     } catch (err) {
         console.error(err);
         Swal.fire('Gagal', err.message || 'Terjadi kesalahan.', 'error');
+    }
+}
+
+async function loadAdminAnnouncement() {
+    const banner = document.getElementById('admin-alert-banner');
+    const textEl = document.getElementById('admin-alert-text');
+    if (!banner || !textEl) return;
+
+    try {
+        const { data, error } = await supabaseClient
+            .from('app_settings')
+            .select('value')
+            .eq('key', 'admin_announcement')
+            .single();
+
+        if (error && error.code !== 'PGRST116') throw error;
+
+        let announcementText = "Pemberitahuan penting untuk panitia: Harap cek keaslian dokumen KK siswa sebelum melakukan verifikasi data.";
+        if (data && data.value && data.value.text) {
+            announcementText = data.value.text;
+        } else {
+            // Seed it if not exists
+            await supabaseClient
+                .from('app_settings')
+                .upsert({ key: 'admin_announcement', value: { text: announcementText } });
+        }
+
+        textEl.innerText = announcementText;
+        banner.classList.remove('hidden');
+
+    } catch (err) {
+        console.error('Failed to load admin announcement:', err);
+    }
+}
+
+async function handleEditAnnouncement() {
+    const textEl = document.getElementById('admin-alert-text');
+    const currentText = textEl ? textEl.innerText : '';
+
+    const { value: newText } = await Swal.fire({
+        title: 'Edit Catatan Internal Panitia',
+        input: 'textarea',
+        inputLabel: 'Catatan ini akan tampil di bagian atas halaman Tambah Siswa Baru.',
+        inputValue: currentText,
+        inputAttributes: {
+            placeholder: 'Masukkan catatan internal di sini...'
+        },
+        showCancelButton: true,
+        confirmButtonText: 'Simpan',
+        cancelButtonText: 'Batal',
+        inputValidator: (value) => {
+            if (!value) {
+                return 'Catatan tidak boleh kosong!';
+            }
+        }
+    });
+
+    if (newText) {
+        try {
+            Swal.fire({
+                title: 'Menyimpan...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            const { error } = await supabaseClient
+                .from('app_settings')
+                .upsert({ key: 'admin_announcement', value: { text: newText } });
+
+            if (error) throw error;
+
+            // Log activity to audit logs
+            await logActivity('EDIT_ADMIN_ANNOUNCEMENT', `Mengubah catatan internal panitia: "${newText.substring(0, 50)}..."`);
+
+            if (textEl) textEl.innerText = newText;
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil',
+                text: 'Catatan internal panitia berhasil diperbarui.',
+                timer: 1500,
+                showConfirmButton: false
+            });
+
+        } catch (err) {
+            console.error('Failed to update announcement:', err);
+            Swal.fire('Gagal', 'Terjadi kesalahan saat memperbarui catatan.', 'error');
+        }
     }
 }
