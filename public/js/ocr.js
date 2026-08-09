@@ -1,6 +1,6 @@
 /**
  * AI OCR Engine for Kartu Keluarga (KK) Extraction
- * Uses Google Gemini Vision API (Supports Images & PDF Documents with High-Precision Table 1 & Table 2 Parsing)
+ * Uses Google Gemini Vision API (Supports Images & PDF Documents with High-Precision Row Index & Table 1 / Table 2 Parsing)
  * Standardized Database Code Mappings (Agama, Pekerjaan, Pendidikan, Kode Wilayah)
  */
 
@@ -273,7 +273,7 @@ async function promptForApiKey() {
         cancelButtonText: 'Batal',
         inputValidator: (value) => {
             if (!value || value.trim().length < 10) {
-                return 'API Key harus diisi dengan benar!';
+                return 'API Key harus diisi dengan weird API Key!';
             }
         }
     });
@@ -321,50 +321,48 @@ async function processKartuKeluargaOCR(imageFile, overrideApiKey = null, student
     const promptText = `Anda adalah Pakar OCR AI Pengenal Dokumen Kartu Keluarga (KK) Indonesia dengan Akurasi Presisi Tinggi.
 
 STRUKTUR DOKUMEN KARTU KELUARGA (KK):
-Dokumen ini terdiri dari 2 Tabel yang memiliki Nomor Baris No (1, 2, 3, 4...) yang sejajar:
-1. TABEL 1 (TABEL ATAS / KOTAK KUNING):
-   Berisi kolom: (1) No, (2) Nama Lengkap, (3) NIK, (4) Jenis Kelamin, (5) Tempat Lahir, (6) Tanggal Lahir, (7) Agama, (8) Pendidikan, (9) Jenis Pekerjaan, (10) Golongan Darah.
-2. TABEL 2 (TABEL BAWAH / KOTAK HIJAU):
-   Berisi kolom: (10/1) No, (11) Status Perkawinan, (12) Tanggal Perkawinan, (13) Status Hubungan Dalam Keluarga, (14) Kewarganegaraan, (15-16) Dokumen Imigrasi, serta (16) Nama Orang Tua: AYAH dan (17) Nama Orang Tua: IBU.
+Dokumen KK memiliki 2 Tabel dengan Nomor Baris "No" (1, 2, 3, 4, 5, 6, 7...) yang SEJAJAR:
+1. TABEL 1 (TABEL ATAS / DEPAN): Berisi kolom (1) No, (2) Nama Lengkap, (3) NIK, (4) JK, (5) Tempat Lahir, (6) Tanggal Lahir, (7) Agama, (8) Pendidikan, (9) Jenis Pekerjaan.
+2. TABEL 2 (TABEL BAWAH / BELAKANG): Berisi kolom (10/1) No, (11) Status Perkawinan, (12) Tgl, (13) Status Hubungan Dalam Keluarga, serta Kolom "Nama Orang Tua": (16) Ayah dan (17) Ibu.
 
-ALGORITMA KETAT PENCOCOKAN RELASIONAL DOKUMEN KK:
-${cleanStudentName ? `SISWA YANG DIDAFTARKAN DARI FORM: "${cleanStudentName}"` : ''}
+ALGORITMA UTAMA PENELUSURAN NOMOR URUT DOKUMEN KK (MANDATORI / WAJIB KETAT):
+${cleanStudentName ? `NAMA SISWA PADA FORMULIR PENDAFTARAN: "${cleanStudentName}"` : ''}
 
-TAHAP 1: MATCHING BARIS SISWA
-- Cari nama siswa ${cleanStudentName ? `"${cleanStudentName}"` : 'pada kolom "Nama Lengkap" di Tabel 1 atau Tabel 2'}.
-- Dapatkan Nomor Baris (misal Baris No. 3, 4, 5, dst) tempat siswa tersebut berada.
+LANGKAH 1: TEMUKAN NOMOR URUT / NO. BARIS SISWA
+- Cari nama siswa ${cleanStudentName ? `"${cleanStudentName}"` : 'anak yang sedang didaftarkan'} pada Tabel 1 (kolom "Nama Lengkap").
+- PERHATIKAN DENGAN SANGAT KETAT NOMOR URUT DENGAN DIBACA DARI KOLOM "No" (Misalnya: No. 1, No. 2, No. 3, No. 4, No. 5, No. 6, dst).
+- CATAT NOMOR URUT SISWA TERSEBUT! (Contoh: Jika siswa berada di Nomor Urut 6 (No. 6), maka NOMOR BARIS KUNCI ADALAH 6!).
 
-TAHAP 2: BACA NAMA ORANG TUA DARI TABEL 2 (BAGIAN BAWAH)
-- Lihat TABEL 2 KHUSUS PADA NOMOR BARIS SISWA TERSEBUT.
-- Di sebelah kanan baris siswa tersebut (kolom "Nama Orang Tua"), dapatkan teks persis:
-  * Nama Ayah Kandung (Kolom "Ayah")
-  * Nama Ibu Kandung (Kolom "Ibu")
+LANGKAH 2: PERGI KONTINU KE BARIS DENGAN NOMOR URUT DARI LANGKAH 1 DI TABEL 2
+- PERGI LANGSUNG KE BARIS DENGAN NOMOR URUT YANG SAMA PERSIS DI TABEL 2 (Contoh: Baris Nomor Urut 6 di Tabel 2!).
+- JANGAN PERNAH MENELUSURI BARIS NOMOR LAIN! HANYA BACA BARIS DENGAN NOMOR URUT DARI LANGKAH 1 TERSEBUT!
+- Pada baris nomor urut siswa tersebut di Tabel 2 (kolom "Nama Orang Tua"), dapatkan teks persis:
+  * "nama_ayah": Nama Ayah Kandung dari kolom (16) "Ayah" khusus pada baris nomor urut siswa tersebut.
+  * "nama_ibu": Nama Ibu Kandung dari kolom (17) "Ibu" khusus pada baris nomor urut siswa tersebut.
 
-TAHAP 3: COCOKKAN NAMA ORANG TUA KE TABEL 1 (BAGIAN ATAS) UNTUK MENGAMBIL DATA LENGKAP
+LANGKAH 3: COCOKKAN NAMA AYAH DAN NAMA IBU TERSEBUT KE TABEL 1 UNTUK AMBIL DATA DETAIL
 - **DATA AYAH**:
-  * Cari baris pada TABEL 1 yang "Nama Lengkap"-nya COCOK PERSIS dengan Nama Ayah Kandung dari Tahap 2 (atau yang berstatus "KEPALA KELUARGA").
-  * BACA DENGAN TELITI DARI BARIS AYAH TERSEBUT DI TABEL 1:
-    - "nama_ayah": Nama lengkap Ayah.
+  * Cari baris di Tabel 1 yang "Nama Lengkap"-nya SAMA PERSIS dengan "nama_ayah" yang didapat dari Langkah 2.
+  * BACA DARI BARIS AYAH DI TABEL 1 TERSEBUT:
     - "nik_ayah": 16 digit NIK dari kolom (3) NIK pada baris Ayah tersebut.
     - "tahun_lahir_ayah": 4 digit tahun lahir (YYYY) dari kolom (6) Tanggal Lahir pada baris Ayah tersebut.
     - "pekerjaan_ayah": Jenis pekerjaan dari kolom (9) Jenis Pekerjaan pada baris Ayah tersebut.
     - "pendidikan_ayah": Tingkat/jenjang pendidikan dari kolom (8) Pendidikan pada baris Ayah tersebut.
 
 - **DATA IBU**:
-  * Cari baris pada TABEL 1 yang "Nama Lengkap"-nya COCOK PERSIS dengan Nama Ibu Kandung dari Tahap 2 (atau yang berstatus "ISTRI").
-  * BACA DENGAN TELITI DARI BARIS IBU TERSEBUT DI TABEL 1:
-    - "nama_ibu": Nama lengkap Ibu.
+  * Cari baris di Tabel 1 yang "Nama Lengkap"-nya SAMA PERSIS dengan "nama_ibu" yang didapat dari Langkah 2.
+  * BACA DARI BARIS IBU DI TABEL 1 TERSEBUT:
     - "nik_ibu": 16 digit NIK dari kolom (3) NIK pada baris Ibu tersebut.
     - "tahun_lahir_ibu": 4 digit tahun lahir (YYYY) dari kolom (6) Tanggal Lahir pada baris Ibu tersebut.
     - "pekerjaan_ibu": Jenis pekerjaan dari kolom (9) Jenis Pekerjaan pada baris Ibu tersebut.
     - "pendidikan_ibu": Tingkat/jenjang pendidikan dari kolom (8) Pendidikan pada baris Ibu tersebut.
 
-TAHAP 4: AGAMA & HEADER
-- "agama": Agama dari kolom (7) Agama (misal "KRISTEN", "ISLAM").
+LANGKAH 4: AGAMA & HEADER
+- "agama": Teks agama dari kolom (7) Agama pada dokumen.
 - "no_kk": 16 digit Nomor Kartu Keluarga dari header atas dokumen KK.
 - "kode_wilayah": "210405AA".
 
-KONVERSI KODE RESMI (SANGAT PENTING):
+KONVERSI KODE RESMI DATABASE:
 - Pekerjaan Ayah & Ibu ke Kode: 1=Tidak bekerja, 2=Nelayan, 3=Petani, 4=Peternak, 5=PNS/TNI/Polri, 6=Karyawan Swasta, 7=Pedagang Kecil, 8=Pedagang Besar, 9=Wiraswasta, 10=Wirausaha, 11=Buruh, 12=Pensiunan, 13=TKI, 14=Karyawan BUMN, 90=Tidak dapat diterapkan, 98=Sudah Meninggal, 99=Lainnya.
 - Pendidikan Ayah & Ibu ke Kode: 0=Tidak sekolah, 1=PAUD, 2=TK/sederajat, 3=Putus SD, 4=SD/sederajat, 5=SMP/sederajat, 6=SMA/sederajat, 7=Paket A, 8=Paket B, 9=Paket C, 20=D1, 21=D2, 22=D3, 23=D4, 30=S1, 31=Profesi, 32=Sp-1, 35=S2.
 - Agama ke Kode: 1=Islam, 2=Kristen, 3=Katholik, 4=Hindu, 5=Budha, 6=Khonghucu, 7=Kepercayaan, 99=Lainnya.
