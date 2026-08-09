@@ -446,16 +446,15 @@ async function saveEdit() {
         const updates = {};
         const customData = { ...(currentData.custom_data || {}) };
 
-        const knownColumns = [
+        const physicalColumns = [
             'nama_lengkap', 'nik', 'tempat_lahir', 'tanggal_lahir',
             'jenis_kelamin', 'agama', 'alamat', 'asal_sekolah',
-            'no_kk', 'nama_ayah', 'tahun_lahir_ayah', 'pekerjaan_ayah',
-            'nama_ibu', 'nik_ibu', 'tahun_lahir_ibu', 'pekerjaan_ibu', 'no_hp'
+            'nama_ayah', 'pekerjaan_ayah', 'nama_ibu', 'pekerjaan_ibu', 'no_hp'
         ];
 
-        // Collect updated fields, routing unknown ones to customData
+        // Collect updated fields, routing non-physical ones to customData
         formData.forEach((value, key) => {
-            if (knownColumns.includes(key)) {
+            if (physicalColumns.includes(key)) {
                 updates[key] = value;
             } else {
                 customData[key] = value;

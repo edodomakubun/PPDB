@@ -305,12 +305,11 @@ async function handleFormSubmit(e) {
         const payload = { custom_data: {} };
         const fileUploads = [];
 
-        // Known columns in 'pendaftaran' table
+        // Known physical columns in 'pendaftaran' table
         const knownColumns = [
             'nama_lengkap', 'nik', 'tempat_lahir', 'tanggal_lahir',
             'jenis_kelamin', 'agama', 'alamat', 'asal_sekolah',
-            'no_kk', 'nama_ayah', 'tahun_lahir_ayah', 'pekerjaan_ayah',
-            'nama_ibu', 'nik_ibu', 'tahun_lahir_ibu', 'pekerjaan_ibu', 'no_hp',
+            'nama_ayah', 'pekerjaan_ayah', 'nama_ibu', 'pekerjaan_ibu', 'no_hp',
             'foto_url', 'kk_url', 'akte_url'
         ];
 

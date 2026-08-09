@@ -62,11 +62,23 @@ CREATE TABLE IF NOT EXISTS public.pendaftaran (
     custom_data JSONB DEFAULT '{}'::JSONB
 );
 
--- Ensure custom_data exists (if table already created)
+-- Ensure custom_data and optional KK fields exist (if table already created)
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'pendaftaran' AND column_name = 'custom_data') THEN
         ALTER TABLE public.pendaftaran ADD COLUMN custom_data JSONB DEFAULT '{}'::JSONB;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'pendaftaran' AND column_name = 'no_kk') THEN
+        ALTER TABLE public.pendaftaran ADD COLUMN no_kk TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'pendaftaran' AND column_name = 'nik_ibu') THEN
+        ALTER TABLE public.pendaftaran ADD COLUMN nik_ibu TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'pendaftaran' AND column_name = 'tahun_lahir_ayah') THEN
+        ALTER TABLE public.pendaftaran ADD COLUMN tahun_lahir_ayah TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'pendaftaran' AND column_name = 'tahun_lahir_ibu') THEN
+        ALTER TABLE public.pendaftaran ADD COLUMN tahun_lahir_ibu TEXT;
     END IF;
 END $$;
 
