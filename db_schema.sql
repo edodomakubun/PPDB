@@ -80,8 +80,11 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'pendaftaran' AND column_name = 'tahun_lahir_ayah') THEN
         ALTER TABLE public.pendaftaran ADD COLUMN tahun_lahir_ayah TEXT;
     END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'pendaftaran' AND column_name = 'tahun_lahir_ibu') THEN
-        ALTER TABLE public.pendaftaran ADD COLUMN tahun_lahir_ibu TEXT;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'pendaftaran' AND column_name = 'pendidikan_ayah') THEN
+        ALTER TABLE public.pendaftaran ADD COLUMN pendidikan_ayah TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'pendaftaran' AND column_name = 'pendidikan_ibu') THEN
+        ALTER TABLE public.pendaftaran ADD COLUMN pendidikan_ibu TEXT;
     END IF;
 END $$;
 
@@ -198,14 +201,16 @@ BEGIN
         ('NIK Ayah', 'nik_ayah', 'number', false, 'parents', 11, NULL),
         ('Tahun Lahir Ayah', 'tahun_lahir_ayah', 'number', false, 'parents', 12, NULL),
         ('Pekerjaan Ayah', 'pekerjaan_ayah', 'text', false, 'parents', 13, NULL),
-        ('Nama Ibu', 'nama_ibu', 'text', true, 'parents', 14, NULL),
-        ('NIK Ibu', 'nik_ibu', 'number', false, 'parents', 15, NULL),
-        ('Tahun Lahir Ibu', 'tahun_lahir_ibu', 'number', false, 'parents', 16, NULL),
-        ('Pekerjaan Ibu', 'pekerjaan_ibu', 'text', false, 'parents', 17, NULL),
-        ('No. HP / WhatsApp', 'no_hp', 'number', true, 'parents', 18, NULL),
-        ('Pas Foto (Maks 2MB)', 'file_foto', 'file', true, 'files', 19, NULL),
-        ('Kartu Keluarga (KK)', 'file_kk', 'file', true, 'files', 20, NULL),
-        ('Akta Kelahiran', 'file_akte', 'file', true, 'files', 21, NULL);
+        ('Pendidikan Ayah', 'pendidikan_ayah', 'text', false, 'parents', 14, NULL),
+        ('Nama Ibu', 'nama_ibu', 'text', true, 'parents', 15, NULL),
+        ('NIK Ibu', 'nik_ibu', 'number', false, 'parents', 16, NULL),
+        ('Tahun Lahir Ibu', 'tahun_lahir_ibu', 'number', false, 'parents', 17, NULL),
+        ('Pekerjaan Ibu', 'pekerjaan_ibu', 'text', false, 'parents', 18, NULL),
+        ('Pendidikan Ibu', 'pendidikan_ibu', 'text', false, 'parents', 19, NULL),
+        ('No. HP / WhatsApp', 'no_hp', 'number', true, 'parents', 20, NULL),
+        ('Pas Foto (Maks 2MB)', 'file_foto', 'file', true, 'files', 21, NULL),
+        ('Kartu Keluarga (KK)', 'file_kk', 'file', true, 'files', 22, NULL),
+        ('Akta Kelahiran', 'file_akte', 'file', true, 'files', 23, NULL);
     END IF;
 END $$;
 

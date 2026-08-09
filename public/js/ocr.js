@@ -1,6 +1,6 @@
 /**
  * AI OCR Engine for Kartu Keluarga (KK) Extraction
- * Uses Google Gemini Vision API (Supports Images & PDF Documents)
+ * Uses Google Gemini Vision API (Supports Images & PDF Documents with High-Precision Parsing)
  */
 
 const OCR_CONFIG = {
@@ -14,15 +14,13 @@ const OCR_CONFIG = {
  */
 async function getGeminiApiKey() {
     try {
-        // Check localStorage first for instant response
         let localKey = localStorage.getItem('gemini_api_key');
         if (localKey && localKey.trim() !== '') {
             return localKey.trim();
         }
 
-        // Fetch from Supabase app_settings
         if (typeof supabaseClient !== 'undefined') {
-            const { data, error } = await supabaseClient
+            const { data } = await supabaseClient
                 .from('app_settings')
                 .select('value')
                 .eq('key', 'gemini_api_key')
@@ -85,14 +83,13 @@ function fileToBase64(file) {
 }
 
 /**
- * Convert Image or PDF File to Base64 (Render first page of PDF if PDF.js is available)
+ * Convert Image or PDF File to Base64 (Render first page of PDF if PDF.js is available at 3.0x Ultra-HD resolution)
  */
 async function processFileForGemini(fileOrBlob) {
     const fileName = fileOrBlob.name || '';
     const isPdf = fileOrBlob.type === 'application/pdf' || fileName.toLowerCase().endsWith('.pdf');
 
     if (isPdf) {
-        // If PDF.js library is available, render PDF page 1 to JPEG Canvas at 2.0x scale for maximum OCR accuracy
         if (typeof pdfjsLib !== 'undefined') {
             try {
                 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -100,14 +97,15 @@ async function processFileForGemini(fileOrBlob) {
                 const pdfDocument = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
                 const page = await pdfDocument.getPage(1);
                 
-                const viewport = page.getViewport({ scale: 2.0 });
+                // 3.0x scale for ultra-clear text & table row alignment
+                const viewport = page.getViewport({ scale: 3.0 });
                 const canvas = document.createElement('canvas');
                 const context = canvas.getContext('2d');
                 canvas.height = viewport.height;
                 canvas.width = viewport.width;
 
                 await page.render({ canvasContext: context, viewport: viewport }).promise;
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
                 return {
                     base64: dataUrl.split(',')[1],
                     mimeType: 'image/jpeg'
@@ -117,7 +115,6 @@ async function processFileForGemini(fileOrBlob) {
             }
         }
         
-        // Native Gemini PDF payload support
         const rawPdfData = await fileToBase64(fileOrBlob);
         return {
             base64: rawPdfData.base64,
@@ -125,7 +122,6 @@ async function processFileForGemini(fileOrBlob) {
         };
     }
 
-    // Default image handling
     return await fileToBase64(fileOrBlob);
 }
 
@@ -169,9 +165,10 @@ async function promptForApiKey() {
  * Process Kartu Keluarga Image/PDF with Gemini AI OCR
  * @param {File} imageFile 
  * @param {string} overrideApiKey 
+ * @param {string} studentName 
  * @returns {Promise<Object>} Extracted KK data object
  */
-async function processKartuKeluargaOCR(imageFile, overrideApiKey = null) {
+async function processKartuKeluargaOCR(imageFile, overrideApiKey = null, studentName = null) {
     if (!imageFile) {
         throw new Error('Berkas dokumen KK tidak ditemukan.');
     }
@@ -195,33 +192,56 @@ async function processKartuKeluargaOCR(imageFile, overrideApiKey = null) {
     // Convert file or PDF to base64 payload
     const fileData = await processFileForGemini(imageFile);
 
-    const promptText = `Anda adalah sistem OCR AI profesional yang bertugas menganalisis dokumen Kartu Keluarga (KK) Indonesia (baik dalam format gambar maupun PDF).
-Analisis dokumen Kartu Keluarga ini dan ekstrak informasi penting berikut ke dalam format JSON terstruktur:
+    const cleanStudentName = studentName && typeof studentName === 'string' && studentName.trim() !== '' ? studentName.trim() : null;
 
-1. "no_kk": Nomor Kartu Keluarga (16 digit angka, terletak di header atas dokumen KK).
-2. "nik_ayah": NIK Ayah (16 digit angka NIK milik anggota keluarga berstatus Kepala Keluarga / Suami / Ayah).
-3. "nik_ibu": NIK Ibu (16 digit angka NIK milik anggota keluarga berstatus Hubungan Ibu / Isteri).
-4. "tahun_lahir_ayah": Tahun lahir Ayah (4 digit tahun angka, misal 1980, diambil dari kolom Tanggal Lahir / NIK milik Ayah / Kepala Keluarga).
-5. "tahun_lahir_ibu": Tahun lahir Ibu (4 digit tahun angka, misal 1983, diambil dari kolom Tanggal Lahir / NIK milik Ibu / Isteri).
-6. "pekerjaan_ayah": Jenis pekerjaan Ayah (teks pekerjaan milik Ayah, misal: 'PNS', 'Petani', 'Wiraswasta', 'Karyawan Swasta', 'Nelayan', dll).
-7. "pekerjaan_ibu": Jenis pekerjaan Ibu (teks pekerjaan milik Ibu, misal: 'Mengurus Rumah Tangga', 'PNS', 'Pedagang', 'Guru', dll).
-8. "nama_ayah": Nama lengkap Ayah / Kepala Keluarga (opsional jika terlihat jelas).
-9. "nama_ibu": Nama lengkap Ibu (opsional jika terlihat jelas).
+    const promptText = `Anda adalah Pakar OCR AI Pengenal Dokumen Kartu Keluarga (KK) Indonesia dengan Akurasi Presisi Tinggi.
 
-BERIKAN RESPON DALAM FORMAT JSON MURNI TANPA MARKDOWN ATAU TEKS LAINNYA. CONTOH:
+TUGAS UTAMA:
+Analisis dokumen Kartu Keluarga ini (gambar atau PDF).
+${cleanStudentName ? `NAMA SISWA / ANGGOTA KELUARGA YANG DIDAFTARKAN PADA FORM: "${cleanStudentName}"` : ''}
+
+METODE MATCHING ORANG TUA KARTU KELUARGA ALGORITMA PRESISI:
+1. PENCARIAN SISWA KE TABEL 2 (TABEL NAMA ORANG TUA DI BAGIAN BAWAH/KOLOM BELAKANG):
+   ${cleanStudentName ? `- Cari baris anggota keluarga pada Tabel 1 di mana "Nama Lengkap" cocok/paling mirip dengan nama siswa: "${cleanStudentName}".
+   - Pada baris siswa "${cleanStudentName}" tersebut, lihat Tabel 2 (tabel bagian bawah/kolom belakang yang berisi kolom "Nama Ayah" dan "Nama Ibu").
+   - Dapatkan nama persis Nama Ayah dan Nama Ibu kandung dari siswa "${cleanStudentName}" ini.` : '- Lihat Tabel 2 (tabel bagian bawah yang berisi kolom "Nama Ayah" dan "Nama Ibu") untuk mengidentifikasi nama Ayah dan Ibu.'}
+
+2. PENCOCOKAN NAMA ORANG TUA KE TABEL 1 (TABEL UTAMA):
+   - **DATA AYAH**:
+     * Cari baris pada Tabel 1 yang "Nama Lengkap"-nya cocok dengan Nama Ayah tersebut (atau yang berstatus "KEPALA KELUARGA" / "SUAMI").
+     * "nama_ayah": Nama lengkap Ayah.
+     * "nik_ayah": 16 digit NIK dari kolom NIK pada baris Ayah tersebut.
+     * "tahun_lahir_ayah": 4 digit tahun lahir (YYYY) dari kolom Tanggal Lahir pada baris Ayah tersebut.
+     * "pekerjaan_ayah": Jenis pekerjaan dari kolom Jenis Pekerjaan pada baris Ayah tersebut.
+     * "pendidikan_ayah": Jenjang/tingkat pendidikan dari kolom Pendidikan pada baris Ayah tersebut (misal: "SD/SEDERAJAT", "SLTP/SEDERAJAT", "SLTA/SEDERAJAT", "DIPLOMA III", "STRATA I", "TIDAK/BELUM SEKOLAH", dll).
+
+   - **DATA IBU**:
+     * Cari baris pada Tabel 1 yang "Nama Lengkap"-nya cocok dengan Nama Ibu tersebut (atau yang berstatus "ISTRI" / "ISTERI" / "IBU").
+     * "nama_ibu": Nama lengkap Ibu.
+     * "nik_ibu": 16 digit NIK dari kolom NIK pada baris Ibu tersebut.
+     * "tahun_lahir_ibu": 4 digit tahun lahir (YYYY) dari kolom Tanggal Lahir pada baris Ibu tersebut.
+     * "pekerjaan_ibu": Jenis pekerjaan dari kolom Jenis Pekerjaan pada baris Ibu tersebut.
+     * "pendidikan_ibu": Jenjang/tingkat pendidikan dari kolom Pendidikan pada baris Ibu tersebut.
+
+3. NOMOR KARTU KELUARGA ("no_kk"):
+   - 16 digit Nomor Kartu Keluarga dari header atas dokumen KK.
+
+BERIKAN RESPON HANYA DALAM FORMAT JSON MURNI TANPA MARKDOWN ATAU TEKS TAMBAHAN. CONTOH:
 {
   "no_kk": "8101010101010001",
-  "nik_ayah": "8101011205800001",
-  "nik_ibu": "8101014502830002",
-  "tahun_lahir_ayah": "1980",
-  "tahun_lahir_ibu": "1983",
-  "pekerjaan_ayah": "Petani/Pekebun",
-  "pekerjaan_ibu": "Mengurus Rumah Tangga",
   "nama_ayah": "Ahmad",
-  "nama_ibu": "Siti"
+  "nik_ayah": "8101011205800001",
+  "tahun_lahir_ayah": "1980",
+  "pekerjaan_ayah": "Petani/Pekebun",
+  "pendidikan_ayah": "SLTA/SEDERAJAT",
+  "nama_ibu": "Siti",
+  "nik_ibu": "8101014502830002",
+  "tahun_lahir_ibu": "1983",
+  "pekerjaan_ibu": "Mengurus Rumah Tangga",
+  "pendidikan_ibu": "SLTP/SEDERAJAT"
 }
 
-Jika ada bidang data yang tidak terlihat atau tidak ada pada gambar/dokumen PDF, berikan nilai null untuk bidang tersebut.`;
+Jika ada bidang data yang tidak terlihat atau tidak ada pada dokumen, berikan nilai null.`;
 
     const requestPayload = {
         contents: [
@@ -240,7 +260,7 @@ Jika ada bidang data yang tidak terlihat atau tidak ada pada gambar/dokumen PDF,
             }
         ],
         generationConfig: {
-            temperature: 0.1,
+            temperature: 0.0, // 0.0 for maximum deterministic accuracy
             response_mime_type: "application/json"
         }
     };
@@ -255,7 +275,6 @@ Jika ada bidang data yang tidak terlihat atau tidak ada pada gambar/dokumen PDF,
             body: JSON.stringify(requestPayload)
         });
 
-        // Fallback model if default is unavailable
         if (!response.ok && response.status === 404) {
             modelUsed = OCR_CONFIG.FALLBACK_MODEL;
             response = await fetch(`${OCR_CONFIG.API_URL}/${modelUsed}:generateContent?key=${apiKey}`, {
@@ -293,6 +312,29 @@ Jika ada bidang data yang tidak terlihat atau tidak ada pada gambar/dokumen PDF,
     } catch (parseErr) {
         console.error('OCR JSON Parse Error:', rawText);
         throw new Error('Format keluaran dari OCR AI tidak valid: ' + parseErr.message);
+    }
+
+    // Post-processing cleanup for max precision
+    if (extractedData) {
+        // Clean 16 digit numbers if spaces/hyphens are present
+        ['no_kk', 'nik_ayah', 'nik_ibu'].forEach(key => {
+            if (extractedData[key] && typeof extractedData[key] === 'string') {
+                const digits = extractedData[key].replace(/\D/g, '');
+                if (digits.length >= 15 && digits.length <= 17) {
+                    extractedData[key] = digits;
+                }
+            }
+        });
+
+        // Clean 4 digit years
+        ['tahun_lahir_ayah', 'tahun_lahir_ibu'].forEach(key => {
+            if (extractedData[key]) {
+                const yearMatch = String(extractedData[key]).match(/\b(19\d{2}|20\d{2})\b/);
+                if (yearMatch) {
+                    extractedData[key] = yearMatch[1];
+                }
+            }
+        });
     }
 
     return extractedData;

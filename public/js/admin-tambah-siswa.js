@@ -178,6 +178,8 @@ async function handleScanKKOCR() {
     }
 
     const file = fileInput.files[0];
+    const studentNameEl = document.querySelector('input[name="nama_lengkap"]');
+    const studentName = studentNameEl ? studentNameEl.value : null;
 
     try {
         Swal.fire({
@@ -185,14 +187,14 @@ async function handleScanKKOCR() {
             html: `
                 <div class="space-y-3 py-2 text-center">
                     <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
-                    <p class="text-xs text-slate-500">Menganalisis dokumen Kartu Keluarga untuk mengekstrak No. KK, NIK Ibu, Tahun Lahir & Pekerjaan Orang Tua...</p>
+                    <p class="text-xs text-slate-500">Mencocokkan data siswa "${studentName || ''}" & orang tua dari Kartu Keluarga...</p>
                 </div>
             `,
             allowOutsideClick: false,
             showConfirmButton: false
         });
 
-        const data = await processKartuKeluargaOCR(file);
+        const data = await processKartuKeluargaOCR(file, null, studentName);
 
         const fieldMapping = {
             'no_kk': data.no_kk,
@@ -202,6 +204,8 @@ async function handleScanKKOCR() {
             'tahun_lahir_ibu': data.tahun_lahir_ibu,
             'pekerjaan_ayah': data.pekerjaan_ayah,
             'pekerjaan_ibu': data.pekerjaan_ibu,
+            'pendidikan_ayah': data.pendidikan_ayah,
+            'pendidikan_ibu': data.pendidikan_ibu,
             'nama_ayah': data.nama_ayah,
             'nama_ibu': data.nama_ibu
         };
@@ -228,6 +232,8 @@ async function handleScanKKOCR() {
                     'tahun_lahir_ibu': 'Thn Lahir Ibu',
                     'pekerjaan_ayah': 'Pekerjaan Ayah',
                     'pekerjaan_ibu': 'Pekerjaan Ibu',
+                    'pendidikan_ayah': 'Pendidikan Ayah',
+                    'pendidikan_ibu': 'Pendidikan Ibu',
                     'nama_ayah': 'Nama Ayah',
                     'nama_ibu': 'Nama Ibu'
                 };

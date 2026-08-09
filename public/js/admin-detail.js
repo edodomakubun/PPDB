@@ -101,8 +101,8 @@ async function renderForm(item) {
     const knownColumns = [
         'nama_lengkap', 'nik', 'tempat_lahir', 'tanggal_lahir',
         'jenis_kelamin', 'agama', 'alamat', 'asal_sekolah',
-        'no_kk', 'nama_ayah', 'nik_ayah', 'tahun_lahir_ayah', 'pekerjaan_ayah',
-        'nama_ibu', 'nik_ibu', 'tahun_lahir_ibu', 'pekerjaan_ibu', 'no_hp'
+        'no_kk', 'nama_ayah', 'nik_ayah', 'tahun_lahir_ayah', 'pekerjaan_ayah', 'pendidikan_ayah',
+        'nama_ibu', 'nik_ibu', 'tahun_lahir_ibu', 'pekerjaan_ibu', 'pendidikan_ibu', 'no_hp'
     ];
     const fileFields = ['file_foto', 'file_kk', 'file_akte'];
     const customFields = formFields.filter(f => !knownColumns.includes(f.name) && !fileFields.includes(f.name));
@@ -112,6 +112,8 @@ async function renderForm(item) {
     const nikIbuVal = item.nik_ibu || (item.custom_data && item.custom_data.nik_ibu) || '';
     const thnAyahVal = item.tahun_lahir_ayah || (item.custom_data && item.custom_data.tahun_lahir_ayah) || '';
     const thnIbuVal = item.tahun_lahir_ibu || (item.custom_data && item.custom_data.tahun_lahir_ibu) || '';
+    const pendidikanAyahVal = item.pendidikan_ayah || (item.custom_data && item.custom_data.pendidikan_ayah) || '';
+    const pendidikanIbuVal = item.pendidikan_ibu || (item.custom_data && item.custom_data.pendidikan_ibu) || '';
 
     let customFieldsHTML = '';
     if (customFields.length > 0) {
@@ -206,12 +208,14 @@ async function renderForm(item) {
                     ${renderField('Tahun Lahir Ayah', 'tahun_lahir_ayah', thnAyahVal)}
                     ${renderField('Pekerjaan Ayah', 'pekerjaan_ayah', item.pekerjaan_ayah)}
                 </div>
+                ${renderField('Pendidikan Ayah', 'pendidikan_ayah', pendidikanAyahVal)}
                 ${renderField('Nama Ibu', 'nama_ibu', item.nama_ibu)}
                 ${renderField('NIK Ibu', 'nik_ibu', nikIbuVal)}
                 <div class="grid grid-cols-2 gap-4">
                     ${renderField('Tahun Lahir Ibu', 'tahun_lahir_ibu', thnIbuVal)}
                     ${renderField('Pekerjaan Ibu', 'pekerjaan_ibu', item.pekerjaan_ibu)}
                 </div>
+                ${renderField('Pendidikan Ibu', 'pendidikan_ibu', pendidikanIbuVal)}
                 ${renderField('No HP / WhatsApp', 'no_hp', item.no_hp)}
 
                 <div class="mt-8 p-6 bg-blue-50 rounded-xl border border-blue-100">
@@ -307,8 +311,9 @@ async function scanExistingKKOCR() {
         const mimeType = (blob.type && blob.type !== 'application/octet-stream') ? blob.type : (isPdfUrl ? 'application/pdf' : 'image/jpeg');
         const file = new File([blob], fileName, { type: mimeType });
 
-        // Process with AI OCR
-        const data = await processKartuKeluargaOCR(file);
+        // Process with AI OCR (passing student name for precise Table 2 -> Table 1 parent matching)
+        const studentName = currentData ? currentData.nama_lengkap : null;
+        const data = await processKartuKeluargaOCR(file, null, studentName);
 
         // Turn on edit mode automatically
         if (!isEditMode) {
@@ -325,6 +330,8 @@ async function scanExistingKKOCR() {
             'tahun_lahir_ibu': data.tahun_lahir_ibu,
             'pekerjaan_ayah': data.pekerjaan_ayah,
             'pekerjaan_ibu': data.pekerjaan_ibu,
+            'pendidikan_ayah': data.pendidikan_ayah,
+            'pendidikan_ibu': data.pendidikan_ibu,
             'nama_ayah': data.nama_ayah,
             'nama_ibu': data.nama_ibu
         };
@@ -351,6 +358,8 @@ async function scanExistingKKOCR() {
                     'tahun_lahir_ibu': 'Thn Lahir Ibu',
                     'pekerjaan_ayah': 'Pekerjaan Ayah',
                     'pekerjaan_ibu': 'Pekerjaan Ibu',
+                    'pendidikan_ayah': 'Pendidikan Ayah',
+                    'pendidikan_ibu': 'Pendidikan Ibu',
                     'nama_ayah': 'Nama Ayah',
                     'nama_ibu': 'Nama Ibu'
                 };
