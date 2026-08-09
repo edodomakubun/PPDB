@@ -178,14 +178,18 @@ BEGIN
         ('Agama', 'agama', 'select', true, 'identity', 6, 'Islam,Kristen,Katolik,Hindu,Buddha,Konghucu'),
         ('Alamat Lengkap', 'alamat', 'textarea', true, 'identity', 7, NULL),
         ('Asal Sekolah', 'asal_sekolah', 'text', false, 'identity', 8, NULL),
-        ('Nama Ayah', 'nama_ayah', 'text', true, 'parents', 9, NULL),
-        ('Pekerjaan Ayah', 'pekerjaan_ayah', 'text', false, 'parents', 10, NULL),
-        ('Nama Ibu', 'nama_ibu', 'text', true, 'parents', 11, NULL),
-        ('Pekerjaan Ibu', 'pekerjaan_ibu', 'text', false, 'parents', 12, NULL),
-        ('No. HP / WhatsApp', 'no_hp', 'number', true, 'parents', 13, NULL),
-        ('Pas Foto (Maks 2MB)', 'file_foto', 'file', true, 'files', 14, NULL),
-        ('Kartu Keluarga (KK)', 'file_kk', 'file', true, 'files', 15, NULL),
-        ('Akta Kelahiran', 'file_akte', 'file', true, 'files', 16, NULL);
+        ('No. Kartu Keluarga (KK)', 'no_kk', 'number', true, 'parents', 9, NULL),
+        ('Nama Ayah', 'nama_ayah', 'text', true, 'parents', 10, NULL),
+        ('Tahun Lahir Ayah', 'tahun_lahir_ayah', 'number', false, 'parents', 11, NULL),
+        ('Pekerjaan Ayah', 'pekerjaan_ayah', 'text', false, 'parents', 12, NULL),
+        ('Nama Ibu', 'nama_ibu', 'text', true, 'parents', 13, NULL),
+        ('NIK Ibu', 'nik_ibu', 'number', false, 'parents', 14, NULL),
+        ('Tahun Lahir Ibu', 'tahun_lahir_ibu', 'number', false, 'parents', 15, NULL),
+        ('Pekerjaan Ibu', 'pekerjaan_ibu', 'text', false, 'parents', 16, NULL),
+        ('No. HP / WhatsApp', 'no_hp', 'number', true, 'parents', 17, NULL),
+        ('Pas Foto (Maks 2MB)', 'file_foto', 'file', true, 'files', 18, NULL),
+        ('Kartu Keluarga (KK)', 'file_kk', 'file', true, 'files', 19, NULL),
+        ('Akta Kelahiran', 'file_akte', 'file', true, 'files', 20, NULL);
     END IF;
 END $$;
 

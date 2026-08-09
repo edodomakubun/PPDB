@@ -101,10 +101,16 @@ async function renderForm(item) {
     const knownColumns = [
         'nama_lengkap', 'nik', 'tempat_lahir', 'tanggal_lahir',
         'jenis_kelamin', 'agama', 'alamat', 'asal_sekolah',
-        'nama_ayah', 'pekerjaan_ayah', 'nama_ibu', 'pekerjaan_ibu', 'no_hp'
+        'no_kk', 'nama_ayah', 'tahun_lahir_ayah', 'pekerjaan_ayah',
+        'nama_ibu', 'nik_ibu', 'tahun_lahir_ibu', 'pekerjaan_ibu', 'no_hp'
     ];
     const fileFields = ['file_foto', 'file_kk', 'file_akte'];
     const customFields = formFields.filter(f => !knownColumns.includes(f.name) && !fileFields.includes(f.name));
+
+    const noKkVal = item.no_kk || (item.custom_data && item.custom_data.no_kk) || '';
+    const nikIbuVal = item.nik_ibu || (item.custom_data && item.custom_data.nik_ibu) || '';
+    const thnAyahVal = item.tahun_lahir_ayah || (item.custom_data && item.custom_data.tahun_lahir_ayah) || '';
+    const thnIbuVal = item.tahun_lahir_ibu || (item.custom_data && item.custom_data.tahun_lahir_ibu) || '';
 
     let customFieldsHTML = '';
     if (customFields.length > 0) {
@@ -152,7 +158,7 @@ async function renderForm(item) {
                     </div>
                 `;
             } else {
-                const inputType = field.type === 'number' ? 'number' : (field.type === 'date' ? 'date' : 'text');
+                const inputType = field.type === 'number' ? 'text' : (field.type === 'date' ? 'date' : 'text');
                 const safeVal = val ? String(val).replace(/"/g, '&quot;') : '';
                 customFieldsHTML += `
                     <div class="mb-4">
@@ -192,10 +198,18 @@ async function renderForm(item) {
             <!-- Right Column: Parent & Files -->
             <div>
                 <h2 class="text-lg font-bold text-slate-900 mb-6 border-b border-slate-200 pb-2">Data Orang Tua / Wali</h2>
+                ${renderField('No. Kartu Keluarga (KK)', 'no_kk', noKkVal)}
                 ${renderField('Nama Ayah', 'nama_ayah', item.nama_ayah)}
-                ${renderField('Pekerjaan Ayah', 'pekerjaan_ayah', item.pekerjaan_ayah)}
+                <div class="grid grid-cols-2 gap-4">
+                    ${renderField('Tahun Lahir Ayah', 'tahun_lahir_ayah', thnAyahVal)}
+                    ${renderField('Pekerjaan Ayah', 'pekerjaan_ayah', item.pekerjaan_ayah)}
+                </div>
                 ${renderField('Nama Ibu', 'nama_ibu', item.nama_ibu)}
-                ${renderField('Pekerjaan Ibu', 'pekerjaan_ibu', item.pekerjaan_ibu)}
+                ${renderField('NIK Ibu', 'nik_ibu', nikIbuVal)}
+                <div class="grid grid-cols-2 gap-4">
+                    ${renderField('Tahun Lahir Ibu', 'tahun_lahir_ibu', thnIbuVal)}
+                    ${renderField('Pekerjaan Ibu', 'pekerjaan_ibu', item.pekerjaan_ibu)}
+                </div>
                 ${renderField('No HP / WhatsApp', 'no_hp', item.no_hp)}
 
                 <div class="mt-8 p-6 bg-blue-50 rounded-xl border border-blue-100">
@@ -304,7 +318,8 @@ async function saveEdit() {
         const knownColumns = [
             'nama_lengkap', 'nik', 'tempat_lahir', 'tanggal_lahir',
             'jenis_kelamin', 'agama', 'alamat', 'asal_sekolah',
-            'nama_ayah', 'pekerjaan_ayah', 'nama_ibu', 'pekerjaan_ibu', 'no_hp'
+            'no_kk', 'nama_ayah', 'tahun_lahir_ayah', 'pekerjaan_ayah',
+            'nama_ibu', 'nik_ibu', 'tahun_lahir_ibu', 'pekerjaan_ibu', 'no_hp'
         ];
 
         // Collect updated fields, routing unknown ones to customData
