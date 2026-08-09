@@ -231,11 +231,17 @@ async function renderForm(item) {
                                 <a href="${fotoSigned}" target="_blank" class="text-xs text-blue-600 hover:underline">Lihat Full Size</a>
                             </div>
                         </div>
-                        <div class="flex items-center gap-4 p-3 border border-slate-200 rounded-lg bg-white">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 border border-slate-200 rounded-lg bg-white">
                             <div class="flex-1">
                                 <p class="text-sm font-semibold text-slate-900">Kartu Keluarga (KK)</p>
-                                <a href="${kkSigned}" target="_blank" class="text-xs text-blue-600 hover:underline">Buka Dokumen</a>
+                                ${item.kk_url ? `<a href="${kkSigned}" target="_blank" class="text-xs text-blue-600 hover:underline">Buka Dokumen</a>` : '<span class="text-xs text-slate-400">Belum diunggah</span>'}
                             </div>
+                            ${item.kk_url ? `
+                                <button type="button" id="btn-scan-existing-kk" class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-bold text-xs rounded-lg shadow-sm transition transform hover:scale-[1.02] cursor-pointer">
+                                    <svg class="w-3.5 h-3.5 text-amber-300 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                    ✨ Scan dengan AI OCR
+                                </button>
+                            ` : ''}
                         </div>
                          <div class="flex items-center gap-4 p-3 border border-slate-200 rounded-lg bg-white">
                             <div class="flex-1">
@@ -249,6 +255,132 @@ async function renderForm(item) {
         </div>
         ${customFieldsHTML}
     `;
+
+    const btnScanKK = document.getElementById('btn-scan-existing-kk');
+    if (btnScanKK) {
+        btnScanKK.addEventListener('click', scanExistingKKOCR);
+    }
+}
+
+async function scanExistingKKOCR() {
+    if (!currentData || !currentData.kk_url) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Berkas KK Tidak Ditemukan',
+            text: 'Siswa ini belum memiliki berkas Kartu Keluarga (KK) yang diunggah.',
+            confirmButtonText: 'OK'
+        });
+        return;
+    }
+
+    try {
+        Swal.fire({
+            title: '🤖 AI Memproses OCR KK...',
+            html: `
+                <div class="space-y-3 py-2 text-center">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
+                    <p class="text-xs text-slate-500">Mengunduh dan menganalisis berkas Kartu Keluarga siswa ini dari server...</p>
+                </div>
+            `,
+            allowOutsideClick: false,
+            showConfirmButton: false
+        });
+
+        // Get signed URL for the KK file
+        const { data: urlData, error: urlErr } = await supabaseClient.storage
+            .from('berkas_siswa')
+            .createSignedUrl(currentData.kk_url, 3600);
+
+        if (urlErr || !urlData?.signedUrl) {
+            throw new Error('Gagal mengakses URL berkas KK dari storage: ' + (urlErr?.message || 'URL Kosong'));
+        }
+
+        // Fetch image as Blob
+        const res = await fetch(urlData.signedUrl);
+        if (!res.ok) throw new Error('Gagal mengunduh berkas KK dari server.');
+        const blob = await res.blob();
+
+        if (!blob.type.startsWith('image/')) {
+            throw new Error('Berkas KK tersimpan dalam format ' + blob.type + '. AI OCR memerlukan berkas berupa gambar (JPG, PNG, WEBP).');
+        }
+
+        const file = new File([blob], currentData.kk_url.split('/').pop() || 'kk_document.jpg', { type: blob.type });
+
+        // Process with AI OCR
+        const data = await processKartuKeluargaOCR(file);
+
+        // Turn on edit mode automatically
+        if (!isEditMode) {
+            isEditMode = true;
+            updateUIState();
+        }
+
+        // Target fields to map
+        const fieldMapping = {
+            'no_kk': data.no_kk,
+            'nik_ibu': data.nik_ibu,
+            'tahun_lahir_ayah': data.tahun_lahir_ayah,
+            'tahun_lahir_ibu': data.tahun_lahir_ibu,
+            'pekerjaan_ayah': data.pekerjaan_ayah,
+            'pekerjaan_ibu': data.pekerjaan_ibu,
+            'nama_ayah': data.nama_ayah,
+            'nama_ibu': data.nama_ibu
+        };
+
+        let filledCount = 0;
+        let summaryHTML = '<ul class="text-left text-xs space-y-1.5 bg-slate-50 p-3 rounded-xl border border-slate-200 font-mono mt-3">';
+
+        for (const [fieldName, val] of Object.entries(fieldMapping)) {
+            if (val) {
+                const el = document.querySelector(`[name="${fieldName}"]`);
+                if (el) {
+                    el.value = val;
+                    el.classList.add('bg-green-50', 'ring-2', 'ring-green-400');
+                    setTimeout(() => {
+                        el.classList.remove('bg-green-50', 'ring-2', 'ring-green-400');
+                    }, 4000);
+                    filledCount++;
+                }
+                const labelMap = {
+                    'no_kk': 'No. KK',
+                    'nik_ibu': 'NIK Ibu',
+                    'tahun_lahir_ayah': 'Thn Lahir Ayah',
+                    'tahun_lahir_ibu': 'Thn Lahir Ibu',
+                    'pekerjaan_ayah': 'Pekerjaan Ayah',
+                    'pekerjaan_ibu': 'Pekerjaan Ibu',
+                    'nama_ayah': 'Nama Ayah',
+                    'nama_ibu': 'Nama Ibu'
+                };
+                summaryHTML += `<li><strong class="text-slate-700">${labelMap[fieldName] || fieldName}:</strong> <span class="text-blue-600 font-bold">${val}</span></li>`;
+            }
+        }
+
+        summaryHTML += '</ul>';
+
+        if (filledCount > 0) {
+            Swal.fire({
+                icon: 'success',
+                title: '✨ OCR AI Berhasil!',
+                html: `
+                    <p class="text-xs text-slate-600">Berhasil mengekstrak <strong>${filledCount} bidang data</strong> dari Kartu Keluarga tersimpan dan mengisi formulir edit secara otomatis:</p>
+                    ${summaryHTML}
+                    <p class="text-xs text-blue-600 font-semibold mt-3">Mode Edit telah diaktifkan. Klik 'Simpan Perubahan' di bagian bawah untuk menyimpan ke database.</p>
+                `,
+                confirmButtonText: 'Periksa Data Edit'
+            });
+        } else {
+            Swal.fire({
+                icon: 'info',
+                title: 'Data Tidak Terbaca',
+                text: 'AI telah menganalisis berkas KK, tetapi tidak dapat menemukan data dengan jelas.',
+                confirmButtonText: 'Mengerti'
+            });
+        }
+
+    } catch (err) {
+        console.error('Scan Existing KK OCR Error:', err);
+        Swal.fire('Gagal OCR AI', err.message || 'Terjadi kesalahan saat memproses berkas KK.', 'error');
+    }
 }
 
 function setupEventListeners() {
