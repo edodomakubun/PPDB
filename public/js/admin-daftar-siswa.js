@@ -356,3 +356,96 @@ async function exportToJSON() {
         Swal.fire('Gagal', 'Terjadi kesalahan saat menyiapkan backup.', 'error');
     }
 }
+
+async function downloadAllBerkas() {
+    if (!allData || allData.length === 0) return Swal.fire('Info', 'Data kosong.', 'info');
+
+    try {
+        const result = await Swal.fire({
+            title: 'Download Semua Berkas?',
+            text: "Ini akan mengunduh file KK dan Akta Kelahiran dari semua siswa dan menyimpannya dalam satu file ZIP. Proses ini mungkin memakan waktu.",
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, Download',
+            cancelButtonText: 'Batal'
+        });
+
+        if (!result.isConfirmed) return;
+
+        Swal.fire({
+            title: 'Menyiapkan File ZIP...',
+            html: 'Mohon tunggu, sedang mengunduh berkas.<br>Progress: <b id="zip-progress">0%</b>',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        const zip = new JSZip();
+        let fileCount = 0;
+        let processed = 0;
+        const totalItems = allData.length * 2; // KK and Akte for each
+
+        for (const item of allData) {
+            // Gunakan nama siswa sebagai nama folder
+            const folderName = item.nama_lengkap.replace(/[^a-zA-Z0-9 ]/g, "").trim();
+            const folder = zip.folder(folderName);
+            
+            const addFileToZip = async (path, filenamePrefix) => {
+                if (!path) return;
+                try {
+                    const { data, error } = await supabaseClient.storage.from('berkas_siswa').createSignedUrl(path, 60);
+                    if (error || !data?.signedUrl) return;
+
+                    const response = await fetch(data.signedUrl);
+                    if (!response.ok) return;
+                    
+                    const blob = await response.blob();
+                    
+                    // Get extension
+                    const ext = path.split('.').pop() || 'jpg';
+                    folder.file(`${filenamePrefix}.${ext}`, blob);
+                    fileCount++;
+                } catch (e) {
+                    console.error('Error fetching file:', e);
+                }
+            };
+
+            await addFileToZip(item.kk_url, 'Kartu_Keluarga');
+            processed++;
+            const progressEl1 = document.getElementById('zip-progress');
+            if(progressEl1) progressEl1.innerText = Math.round((processed / totalItems) * 100) + '%';
+            
+            await addFileToZip(item.akte_url, 'Akte_Kelahiran');
+            processed++;
+            const progressEl2 = document.getElementById('zip-progress');
+            if(progressEl2) progressEl2.innerText = Math.round((processed / totalItems) * 100) + '%';
+        }
+
+        if (fileCount === 0) {
+            return Swal.fire('Info', 'Tidak ada berkas (KK/Akte) yang ditemukan untuk diunduh.', 'info');
+        }
+
+        Swal.fire({
+            title: 'Menyimpan ZIP...',
+            text: 'Sedang membuat file ZIP...',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        const content = await zip.generateAsync({ type: 'blob' });
+        const url = URL.createObjectURL(content);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Berkas_Siswa_${new Date().toISOString().split('T')[0]}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        Swal.fire('Berhasil!', `Berhasil mengunduh ${fileCount} berkas dalam file ZIP.`, 'success');
+        
+    } catch (error) {
+        console.error('Download Berkas Error:', error);
+        Swal.fire('Gagal', 'Terjadi kesalahan saat mengunduh berkas.', 'error');
+    }
+}
