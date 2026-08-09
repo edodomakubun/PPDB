@@ -1,6 +1,6 @@
 /**
  * AI OCR Engine for Kartu Keluarga (KK) Extraction
- * Uses Google Gemini Vision API
+ * Uses Google Gemini Vision API (Supports Images & PDF Documents)
  */
 
 const OCR_CONFIG = {
@@ -85,6 +85,51 @@ function fileToBase64(file) {
 }
 
 /**
+ * Convert Image or PDF File to Base64 (Render first page of PDF if PDF.js is available)
+ */
+async function processFileForGemini(fileOrBlob) {
+    const fileName = fileOrBlob.name || '';
+    const isPdf = fileOrBlob.type === 'application/pdf' || fileName.toLowerCase().endsWith('.pdf');
+
+    if (isPdf) {
+        // If PDF.js library is available, render PDF page 1 to JPEG Canvas at 2.0x scale for maximum OCR accuracy
+        if (typeof pdfjsLib !== 'undefined') {
+            try {
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                const arrayBuffer = await fileOrBlob.arrayBuffer();
+                const pdfDocument = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                const page = await pdfDocument.getPage(1);
+                
+                const viewport = page.getViewport({ scale: 2.0 });
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                await page.render({ canvasContext: context, viewport: viewport }).promise;
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+                return {
+                    base64: dataUrl.split(',')[1],
+                    mimeType: 'image/jpeg'
+                };
+            } catch (err) {
+                console.warn('Gagal merender PDF via PDF.js, akan menggunakan payload PDF langsung ke Gemini:', err);
+            }
+        }
+        
+        // Native Gemini PDF payload support
+        const rawPdfData = await fileToBase64(fileOrBlob);
+        return {
+            base64: rawPdfData.base64,
+            mimeType: 'application/pdf'
+        };
+    }
+
+    // Default image handling
+    return await fileToBase64(fileOrBlob);
+}
+
+/**
  * Prompt user/admin for Gemini API Key if missing
  */
 async function promptForApiKey() {
@@ -121,18 +166,22 @@ async function promptForApiKey() {
 }
 
 /**
- * Process Kartu Keluarga Image with Gemini AI OCR
+ * Process Kartu Keluarga Image/PDF with Gemini AI OCR
  * @param {File} imageFile 
  * @param {string} overrideApiKey 
  * @returns {Promise<Object>} Extracted KK data object
  */
 async function processKartuKeluargaOCR(imageFile, overrideApiKey = null) {
     if (!imageFile) {
-        throw new Error('Berkas gambar KK tidak ditemukan.');
+        throw new Error('Berkas dokumen KK tidak ditemukan.');
     }
 
-    if (!imageFile.type.startsWith('image/')) {
-        throw new Error('Fitur OCR AI memerlukan berkas berupa gambar (JPG, PNG, WEBP). Jika berkas dalam format PDF, silakan gunakan foto/scan gambar KK.');
+    const fileName = imageFile.name || '';
+    const isImage = imageFile.type.startsWith('image/');
+    const isPdf = imageFile.type === 'application/pdf' || fileName.toLowerCase().endsWith('.pdf');
+
+    if (!isImage && !isPdf) {
+        throw new Error('Format berkas tidak didukung. Silakan gunakan foto/scan gambar (JPG, PNG, WEBP) atau dokumen PDF.');
     }
 
     let apiKey = overrideApiKey || await getGeminiApiKey();
@@ -143,11 +192,11 @@ async function processKartuKeluargaOCR(imageFile, overrideApiKey = null) {
         }
     }
 
-    // Convert image file to base64
-    const fileData = await fileToBase64(imageFile);
+    // Convert file or PDF to base64 payload
+    const fileData = await processFileForGemini(imageFile);
 
-    const promptText = `Anda adalah sistem OCR AI profesional yang bertugas menganalisis dokumen Kartu Keluarga (KK) Indonesia.
-Analisis gambar Kartu Keluarga ini dan ekstrak informasi penting berikut ke dalam format JSON terstruktur:
+    const promptText = `Anda adalah sistem OCR AI profesional yang bertugas menganalisis dokumen Kartu Keluarga (KK) Indonesia (baik dalam format gambar maupun PDF).
+Analisis dokumen Kartu Keluarga ini dan ekstrak informasi penting berikut ke dalam format JSON terstruktur:
 
 1. "no_kk": Nomor Kartu Keluarga (16 digit angka, terletak di header atas dokumen KK).
 2. "nik_ibu": NIK Ibu (16 digit angka NIK milik anggota keluarga berstatus Hubungan Ibu / Isteri).
@@ -170,7 +219,7 @@ BERIKAN RESPON DALAM FORMAT JSON MURNI TANPA MARKDOWN ATAU TEKS LAINNYA. CONTOH:
   "nama_ibu": "Siti"
 }
 
-Jika ada bidang data yang tidak terlihat atau tidak ada pada gambar, berikan nilai null untuk bidang tersebut.`;
+Jika ada bidang data yang tidak terlihat atau tidak ada pada gambar/dokumen PDF, berikan nilai null untuk bidang tersebut.`;
 
     const requestPayload = {
         contents: [
@@ -221,7 +270,6 @@ Jika ada bidang data yang tidak terlihat atau tidak ada pada gambar, berikan nil
         const errorData = await response.json().catch(() => ({}));
         const msg = errorData.error?.message || response.statusText;
         if (msg.includes('API key') || response.status === 400 || response.status === 403) {
-            // Clear invalid stored key
             localStorage.removeItem('gemini_api_key');
             throw new Error('Gemini API Key tidak valid atau telah kedaluwarsa. Silakan periksa kembali API Key Anda.');
         }

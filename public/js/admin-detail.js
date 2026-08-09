@@ -300,11 +300,10 @@ async function scanExistingKKOCR() {
         if (!res.ok) throw new Error('Gagal mengunduh berkas KK dari server.');
         const blob = await res.blob();
 
-        if (!blob.type.startsWith('image/')) {
-            throw new Error('Berkas KK tersimpan dalam format ' + blob.type + '. AI OCR memerlukan berkas berupa gambar (JPG, PNG, WEBP).');
-        }
-
-        const file = new File([blob], currentData.kk_url.split('/').pop() || 'kk_document.jpg', { type: blob.type });
+        const fileName = currentData.kk_url.split('/').pop() || 'kk_document';
+        const isPdfUrl = currentData.kk_url.toLowerCase().endsWith('.pdf');
+        const mimeType = (blob.type && blob.type !== 'application/octet-stream') ? blob.type : (isPdfUrl ? 'application/pdf' : 'image/jpeg');
+        const file = new File([blob], fileName, { type: mimeType });
 
         // Process with AI OCR
         const data = await processKartuKeluargaOCR(file);
