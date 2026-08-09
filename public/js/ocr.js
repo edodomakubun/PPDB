@@ -1,6 +1,6 @@
 /**
  * AI OCR Engine for Kartu Keluarga (KK) Extraction
- * Uses Google Gemini Vision API (Supports Images & PDF Documents with High-Precision Parsing)
+ * Uses Google Gemini Vision API (Supports Images & PDF Documents with High-Precision Table 1 & Table 2 Parsing)
  * Standardized Database Code Mappings (Agama, Pekerjaan, Pendidikan, Kode Wilayah)
  */
 
@@ -320,57 +320,69 @@ async function processKartuKeluargaOCR(imageFile, overrideApiKey = null, student
 
     const promptText = `Anda adalah Pakar OCR AI Pengenal Dokumen Kartu Keluarga (KK) Indonesia dengan Akurasi Presisi Tinggi.
 
-TUGAS UTAMA:
-Analisis dokumen Kartu Keluarga ini (gambar atau PDF).
-${cleanStudentName ? `NAMA SISWA / ANGGOTA KELUARGA YANG DIDAFTARKAN PADA FORM: "${cleanStudentName}"` : ''}
+STRUKTUR DOKUMEN KARTU KELUARGA (KK):
+Dokumen ini terdiri dari 2 Tabel yang memiliki Nomor Baris No (1, 2, 3, 4...) yang sejajar:
+1. TABEL 1 (TABEL ATAS / KOTAK KUNING):
+   Berisi kolom: (1) No, (2) Nama Lengkap, (3) NIK, (4) Jenis Kelamin, (5) Tempat Lahir, (6) Tanggal Lahir, (7) Agama, (8) Pendidikan, (9) Jenis Pekerjaan, (10) Golongan Darah.
+2. TABEL 2 (TABEL BAWAH / KOTAK HIJAU):
+   Berisi kolom: (10/1) No, (11) Status Perkawinan, (12) Tanggal Perkawinan, (13) Status Hubungan Dalam Keluarga, (14) Kewarganegaraan, (15-16) Dokumen Imigrasi, serta (16) Nama Orang Tua: AYAH dan (17) Nama Orang Tua: IBU.
 
-METODE MATCHING ORANG TUA KARTU KELUARGA ALGORITMA PRESISI:
-1. PENCARIAN SISWA KE TABEL 2 (TABEL NAMA ORANG TUA DI BAGIAN BAWAH/KOLOM BELAKANG):
-   ${cleanStudentName ? `- Cari baris anggota keluarga pada Tabel 1 di mana "Nama Lengkap" cocok/paling mirip dengan nama siswa: "${cleanStudentName}".
-   - Pada baris siswa "${cleanStudentName}" tersebut, lihat Tabel 2 (tabel bagian bawah/kolom belakang yang berisi kolom "Nama Ayah" dan "Nama Ibu").
-   - Dapatkan nama persis Nama Ayah dan Nama Ibu kandung dari siswa "${cleanStudentName}" ini.` : '- Lihat Tabel 2 (tabel bagian bawah yang berisi kolom "Nama Ayah" dan "Nama Ibu") untuk mengidentifikasi nama Ayah dan Ibu.'}
+ALGORITMA KETAT PENCOCOKAN RELASIONAL DOKUMEN KK:
+${cleanStudentName ? `SISWA YANG DIDAFTARKAN DARI FORM: "${cleanStudentName}"` : ''}
 
-2. PENCOCOKAN NAMA ORANG TUA KE TABEL 1 (TABEL UTAMA):
-   - **DATA AYAH**:
-     * Cari baris pada Tabel 1 yang "Nama Lengkap"-nya cocok dengan Nama Ayah tersebut (atau yang berstatus "KEPALA KELUARGA" / "SUAMI").
-     * "nama_ayah": Nama lengkap Ayah.
-     * "nik_ayah": 16 digit NIK dari kolom NIK pada baris Ayah tersebut.
-     * "tahun_lahir_ayah": 4 digit tahun lahir (YYYY) dari kolom Tanggal Lahir pada baris Ayah tersebut.
-     * "pekerjaan_ayah": Jenis pekerjaan dari kolom Jenis Pekerjaan pada baris Ayah tersebut.
-     * "pendidikan_ayah": Jenjang/tingkat pendidikan dari kolom Pendidikan pada baris Ayah tersebut.
+TAHAP 1: MATCHING BARIS SISWA
+- Cari nama siswa ${cleanStudentName ? `"${cleanStudentName}"` : 'pada kolom "Nama Lengkap" di Tabel 1 atau Tabel 2'}.
+- Dapatkan Nomor Baris (misal Baris No. 3, 4, 5, dst) tempat siswa tersebut berada.
 
-   - **DATA IBU**:
-     * Cari baris pada Tabel 1 yang "Nama Lengkap"-nya cocok dengan Nama Ibu tersebut (atau yang berstatus "ISTRI" / "ISTERI" / "IBU").
-     * "nama_ibu": Nama lengkap Ibu.
-     * "nik_ibu": 16 digit NIK dari kolom NIK pada baris Ibu tersebut.
-     * "tahun_lahir_ibu": 4 digit tahun lahir (YYYY) dari kolom Tanggal Lahir pada baris Ibu tersebut.
-     * "pekerjaan_ibu": Jenis pekerjaan dari kolom Jenis Pekerjaan pada baris Ibu tersebut.
-     * "pendidikan_ibu": Jenjang/tingkat pendidikan dari kolom Pendidikan pada baris Ibu tersebut.
+TAHAP 2: BACA NAMA ORANG TUA DARI TABEL 2 (BAGIAN BAWAH)
+- Lihat TABEL 2 KHUSUS PADA NOMOR BARIS SISWA TERSEBUT.
+- Di sebelah kanan baris siswa tersebut (kolom "Nama Orang Tua"), dapatkan teks persis:
+  * Nama Ayah Kandung (Kolom "Ayah")
+  * Nama Ibu Kandung (Kolom "Ibu")
 
-3. AGAMA DAN KODE WILAYAH:
-   - "agama": Agama anggota keluarga (misal: "Islam", "Kristen", "Katolik", "Hindu", "Budha", "Khonghucu").
-   - "kode_wilayah": "210405AA" (Kode Wilayah Default Lelingluan - Tanimbar).
-   - "no_kk": 16 digit Nomor Kartu Keluarga dari header atas.
+TAHAP 3: COCOKKAN NAMA ORANG TUA KE TABEL 1 (BAGIAN ATAS) UNTUK MENGAMBIL DATA LENGKAP
+- **DATA AYAH**:
+  * Cari baris pada TABEL 1 yang "Nama Lengkap"-nya COCOK PERSIS dengan Nama Ayah Kandung dari Tahap 2 (atau yang berstatus "KEPALA KELUARGA").
+  * BACA DENGAN TELITI DARI BARIS AYAH TERSEBUT DI TABEL 1:
+    - "nama_ayah": Nama lengkap Ayah.
+    - "nik_ayah": 16 digit NIK dari kolom (3) NIK pada baris Ayah tersebut.
+    - "tahun_lahir_ayah": 4 digit tahun lahir (YYYY) dari kolom (6) Tanggal Lahir pada baris Ayah tersebut.
+    - "pekerjaan_ayah": Jenis pekerjaan dari kolom (9) Jenis Pekerjaan pada baris Ayah tersebut.
+    - "pendidikan_ayah": Tingkat/jenjang pendidikan dari kolom (8) Pendidikan pada baris Ayah tersebut.
 
-STANDAR KODE TERHUBUNG (SANGAT PENTING):
-- Konversikan Pekerjaan ke Kode: 1=Tidak bekerja, 2=Nelayan, 3=Petani, 4=Peternak, 5=PNS/TNI/Polri, 6=Karyawan Swasta, 7=Pedagang Kecil, 8=Pedagang Besar, 9=Wiraswasta, 10=Wirausaha, 11=Buruh, 12=Pensiunan, 13=TKI, 14=Karyawan BUMN, 90=Tidak dapat diterapkan, 98=Sudah Meninggal, 99=Lainnya.
-- Konversikan Pendidikan ke Kode: 0=Tidak sekolah, 1=PAUD, 2=TK/sederajat, 3=Putus SD, 4=SD/sederajat, 5=SMP/sederajat, 6=SMA/sederajat, 7=Paket A, 8=Paket B, 9=Paket C, 20=D1, 21=D2, 22=D3, 23=D4, 30=S1, 31=Profesi, 32=Sp-1, 35=S2.
-- Konversikan Agama ke Kode: 1=Islam, 2=Kristen, 3=Katholik, 4=Hindu, 5=Budha, 6=Khonghucu, 7=Kepercayaan, 99=Lainnya.
+- **DATA IBU**:
+  * Cari baris pada TABEL 1 yang "Nama Lengkap"-nya COCOK PERSIS dengan Nama Ibu Kandung dari Tahap 2 (atau yang berstatus "ISTRI").
+  * BACA DENGAN TELITI DARI BARIS IBU TERSEBUT DI TABEL 1:
+    - "nama_ibu": Nama lengkap Ibu.
+    - "nik_ibu": 16 digit NIK dari kolom (3) NIK pada baris Ibu tersebut.
+    - "tahun_lahir_ibu": 4 digit tahun lahir (YYYY) dari kolom (6) Tanggal Lahir pada baris Ibu tersebut.
+    - "pekerjaan_ibu": Jenis pekerjaan dari kolom (9) Jenis Pekerjaan pada baris Ibu tersebut.
+    - "pendidikan_ibu": Tingkat/jenjang pendidikan dari kolom (8) Pendidikan pada baris Ibu tersebut.
 
-BERIKAN RESPON HANYA DALAM FORMAT JSON MURNI TANPA MARKDOWN. CONTOH:
+TAHAP 4: AGAMA & HEADER
+- "agama": Agama dari kolom (7) Agama (misal "KRISTEN", "ISLAM").
+- "no_kk": 16 digit Nomor Kartu Keluarga dari header atas dokumen KK.
+- "kode_wilayah": "210405AA".
+
+KONVERSI KODE RESMI (SANGAT PENTING):
+- Pekerjaan Ayah & Ibu ke Kode: 1=Tidak bekerja, 2=Nelayan, 3=Petani, 4=Peternak, 5=PNS/TNI/Polri, 6=Karyawan Swasta, 7=Pedagang Kecil, 8=Pedagang Besar, 9=Wiraswasta, 10=Wirausaha, 11=Buruh, 12=Pensiunan, 13=TKI, 14=Karyawan BUMN, 90=Tidak dapat diterapkan, 98=Sudah Meninggal, 99=Lainnya.
+- Pendidikan Ayah & Ibu ke Kode: 0=Tidak sekolah, 1=PAUD, 2=TK/sederajat, 3=Putus SD, 4=SD/sederajat, 5=SMP/sederajat, 6=SMA/sederajat, 7=Paket A, 8=Paket B, 9=Paket C, 20=D1, 21=D2, 22=D3, 23=D4, 30=S1, 31=Profesi, 32=Sp-1, 35=S2.
+- Agama ke Kode: 1=Islam, 2=Kristen, 3=Katholik, 4=Hindu, 5=Budha, 6=Khonghucu, 7=Kepercayaan, 99=Lainnya.
+
+BERIKAN RESPON HANYA DALAM FORMAT JSON MURNI TANPA MARKDOWN ATAU TEKS TAMBAHAN. CONTOH:
 {
-  "no_kk": "8101010101010001",
-  "nama_ayah": "Ahmad",
-  "nik_ayah": "8101011205800001",
-  "tahun_lahir_ayah": "1980",
-  "pekerjaan_ayah": "3",
-  "pendidikan_ayah": "6",
-  "nama_ibu": "Siti",
-  "nik_ibu": "8101014502830002",
-  "tahun_lahir_ibu": "1983",
+  "no_kk": "8103052407200001",
+  "nama_ayah": "IZAK ELATH",
+  "nik_ayah": "8103051404930003",
+  "tahun_lahir_ayah": "1993",
+  "pekerjaan_ayah": "2",
+  "pendidikan_ayah": "4",
+  "nama_ibu": "YOSINTA NGOBUT",
+  "nik_ibu": "9202125505930002",
+  "tahun_lahir_ibu": "1993",
   "pekerjaan_ibu": "1",
-  "pendidikan_ibu": "5",
-  "agama": "1",
+  "pendidikan_ibu": "6",
+  "agama": "2",
   "kode_wilayah": "210405AA"
 }`;
 
