@@ -204,17 +204,42 @@ async function deleteData(id) {
 function exportToExcel() {
     if (!allData || allData.length === 0) return Swal.fire('Info', 'Data kosong.', 'info');
 
-    const dataForExcel = allData.map(item => ({
-        'Tanggal': new Date(item.created_at).toLocaleDateString('id-ID'),
-        'NIK': item.nik,
-        'Nama': item.nama_lengkap,
-        'TTL': `${item.tempat_lahir}, ${item.tanggal_lahir}`,
-        'JK': item.jenis_kelamin,
-        'Sekolah Asal': item.asal_sekolah || '-',
-        'Orang Tua': `${item.nama_ayah} / ${item.nama_ibu}`,
-        'No HP': item.no_hp,
-        'Status': item.status
-    }));
+    const dataForExcel = allData.map(item => {
+        const noKkVal = item.no_kk || (item.custom_data && item.custom_data.no_kk) || '';
+        const nikAyahVal = item.nik_ayah || (item.custom_data && item.custom_data.nik_ayah) || '';
+        const nikIbuVal = item.nik_ibu || (item.custom_data && item.custom_data.nik_ibu) || '';
+        const thnAyahVal = item.tahun_lahir_ayah || (item.custom_data && item.custom_data.tahun_lahir_ayah) || '';
+        const thnIbuVal = item.tahun_lahir_ibu || (item.custom_data && item.custom_data.tahun_lahir_ibu) || '';
+        const pendAyahVal = item.pendidikan_ayah || (item.custom_data && item.custom_data.pendidikan_ayah) || '';
+        const pendIbuVal = item.pendidikan_ibu || (item.custom_data && item.custom_data.pendidikan_ibu) || '';
+        const kodeWilayahVal = item.kode_wilayah || (item.custom_data && item.custom_data.kode_wilayah) || '210405AA';
+
+        return {
+            'Tanggal Daftar': new Date(item.created_at).toLocaleDateString('id-ID'),
+            'No. KK': noKkVal,
+            'NIK Siswa': item.nik,
+            'Nama Lengkap': item.nama_lengkap,
+            'Tempat Lahir': item.tempat_lahir,
+            'Tanggal Lahir': item.tanggal_lahir,
+            'Jenis Kelamin': item.jenis_kelamin,
+            'Agama (Kode)': window.mapAgamaToCode ? window.mapAgamaToCode(item.agama) : (item.agama || ''),
+            'Kode Wilayah': kodeWilayahVal,
+            'Alamat': item.alamat || '',
+            'Sekolah Asal': item.asal_sekolah || '',
+            'Nama Ayah': item.nama_ayah || '',
+            'NIK Ayah': nikAyahVal,
+            'Tahun Lahir Ayah': thnAyahVal,
+            'Pekerjaan Ayah (Kode)': window.mapPekerjaanToCode ? window.mapPekerjaanToCode(item.pekerjaan_ayah) : (item.pekerjaan_ayah || ''),
+            'Pendidikan Ayah (Kode)': window.mapPendidikanToCode ? window.mapPendidikanToCode(pendAyahVal) : (pendAyahVal || ''),
+            'Nama Ibu': item.nama_ibu || '',
+            'NIK Ibu': nikIbuVal,
+            'Tahun Lahir Ibu': thnIbuVal,
+            'Pekerjaan Ibu (Kode)': window.mapPekerjaanToCode ? window.mapPekerjaanToCode(item.pekerjaan_ibu) : (item.pekerjaan_ibu || ''),
+            'Pendidikan Ibu (Kode)': window.mapPendidikanToCode ? window.mapPendidikanToCode(pendIbuVal) : (pendIbuVal || ''),
+            'No HP': item.no_hp || '',
+            'Status': item.status || ''
+        };
+    });
 
     const ws = XLSX.utils.json_to_sheet(dataForExcel);
     const wb = XLSX.utils.book_new();
@@ -229,7 +254,7 @@ function exportToPDF() {
     const doc = new jsPDF('l', 'mm', 'a4');
 
     doc.setFontSize(14);
-    doc.text('Laporan Data Pendaftar Siswa Baru', 8, 12);
+    doc.text('Laporan Data Pendaftar Siswa Baru (Format Kode Dapodik)', 8, 12);
     doc.setFontSize(9);
     doc.text(`SD INPRES LELINGLUAN - ${new Date().toLocaleDateString('id-ID')}`, 8, 18);
 
@@ -242,22 +267,30 @@ function exportToPDF() {
         return dateStr;
     };
 
-    const tableRows = allData.map((item, i) => [
-        i + 1,
-        item.nik || '-',
-        item.nama_lengkap || '-',
-        item.jenis_kelamin || '-',
-        item.tempat_lahir || '-',
-        formatBirthdate(item.tanggal_lahir),
-        item.agama || '-',
-        item.nama_ayah || '-',
-        item.pekerjaan_ayah || '-',
-        item.nama_ibu || '-',
-        item.pekerjaan_ibu || '-',
-        item.no_hp || '-',
-        item.alamat || '-',
-        item.asal_sekolah || '-'
-    ]);
+    const tableRows = allData.map((item, i) => {
+        const pendAyahVal = item.pendidikan_ayah || (item.custom_data && item.custom_data.pendidikan_ayah) || '';
+        const pendIbuVal = item.pendidikan_ibu || (item.custom_data && item.custom_data.pendidikan_ibu) || '';
+        const kodeAgama = window.mapAgamaToCode ? window.mapAgamaToCode(item.agama) : (item.agama || '-');
+        const kodePekAyah = window.mapPekerjaanToCode ? window.mapPekerjaanToCode(item.pekerjaan_ayah) : (item.pekerjaan_ayah || '-');
+        const kodePekIbu = window.mapPekerjaanToCode ? window.mapPekerjaanToCode(item.pekerjaan_ibu) : (item.pekerjaan_ibu || '-');
+
+        return [
+            i + 1,
+            item.nik || '-',
+            item.nama_lengkap || '-',
+            item.jenis_kelamin || '-',
+            item.tempat_lahir || '-',
+            formatBirthdate(item.tanggal_lahir),
+            kodeAgama,
+            item.nama_ayah || '-',
+            kodePekAyah,
+            item.nama_ibu || '-',
+            kodePekIbu,
+            item.no_hp || '-',
+            item.alamat || '-',
+            item.asal_sekolah || '-'
+        ];
+    });
 
     const headers = [
         "NO URUT",

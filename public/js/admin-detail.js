@@ -97,6 +97,30 @@ async function renderForm(item) {
         `;
     };
 
+    // Helper to create code select fields (Displays human text in UI, submits numeric code)
+    const renderCodeSelectField = (label, name, value, category) => {
+        const dict = window.LOOKUP_CODES ? window.LOOKUP_CODES[category] : {};
+        let codeVal = value;
+        if (category === 'AGAMA') codeVal = window.mapAgamaToCode ? window.mapAgamaToCode(value) : value;
+        else if (category === 'PEKERJAAN') codeVal = window.mapPekerjaanToCode ? window.mapPekerjaanToCode(value) : value;
+        else if (category === 'PENDIDIKAN') codeVal = window.mapPendidikanToCode ? window.mapPendidikanToCode(value) : value;
+
+        let optionsHTML = '<option value="">Pilih ' + label + '...</option>';
+        for (const [code, text] of Object.entries(dict)) {
+            const selected = String(code) === String(codeVal) ? 'selected' : '';
+            optionsHTML += `<option value="${code}" ${selected}>${text}</option>`;
+        }
+
+        return `
+        <div class="mb-4">
+            <label class="block text-sm font-semibold text-slate-600 mb-1">${label}</label>
+            <select name="${name}" class="data-field w-full px-4 py-2 border border-slate-300 rounded-lg text-slate-900 bg-slate-50 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" disabled>
+                ${optionsHTML}
+            </select>
+        </div>
+        `;
+    };
+
     // Filter out known static fields to identify dynamic custom fields
     const knownColumns = [
         'nama_lengkap', 'nik', 'tempat_lahir', 'tanggal_lahir',
@@ -114,7 +138,7 @@ async function renderForm(item) {
     const thnIbuVal = item.tahun_lahir_ibu || (item.custom_data && item.custom_data.tahun_lahir_ibu) || '';
     const pendidikanAyahVal = item.pendidikan_ayah || (item.custom_data && item.custom_data.pendidikan_ayah) || '';
     const pendidikanIbuVal = item.pendidikan_ibu || (item.custom_data && item.custom_data.pendidikan_ibu) || '';
-    const kodeWilayahVal = item.kode_wilayah || (item.custom_data && item.custom_data.kode_wilayah) || '';
+    const kodeWilayahVal = item.kode_wilayah || (item.custom_data && item.custom_data.kode_wilayah) || '210405AA';
 
     let customFieldsHTML = '';
     if (customFields.length > 0) {
@@ -148,8 +172,11 @@ async function renderForm(item) {
                 const options = field.options ? field.options.split(',') : [];
                 const optionsHTML = options.map(o => {
                     const cleanOpt = o.trim();
-                    const selected = cleanOpt === String(val).trim() ? 'selected' : '';
-                    return `<option value="${cleanOpt}" ${selected}>${cleanOpt}</option>`;
+                    const parts = cleanOpt.split(':');
+                    const optVal = parts.length > 1 ? parts[0] : cleanOpt;
+                    const optText = parts.length > 1 ? parts[1] : cleanOpt;
+                    const selected = optVal === String(val).trim() ? 'selected' : '';
+                    return `<option value="${optVal}" ${selected}>${optText}</option>`;
                 }).join('');
 
                 customFieldsHTML += `
@@ -191,7 +218,7 @@ async function renderForm(item) {
                     ${renderField('Tanggal Lahir', 'tanggal_lahir', item.tanggal_lahir, 'date')}
                 </div>
                 ${renderField('Jenis Kelamin', 'jenis_kelamin', item.jenis_kelamin)}
-                ${renderField('Agama (Kode)', 'agama', item.agama)}
+                ${renderCodeSelectField('Agama', 'agama', item.agama, 'AGAMA')}
                 <div class="mb-4">
                     <label class="block text-sm font-semibold text-slate-600 mb-1">Alamat</label>
                     <textarea name="alamat" class="data-field w-full px-4 py-2 border border-slate-300 rounded-lg text-slate-900 bg-slate-50 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" rows="3" disabled>${item.alamat || ''}</textarea>
@@ -208,16 +235,16 @@ async function renderForm(item) {
                 ${renderField('NIK Ayah', 'nik_ayah', nikAyahVal)}
                 <div class="grid grid-cols-2 gap-4">
                     ${renderField('Tahun Lahir Ayah', 'tahun_lahir_ayah', thnAyahVal)}
-                    ${renderField('Pekerjaan Ayah', 'pekerjaan_ayah', item.pekerjaan_ayah)}
+                    ${renderCodeSelectField('Pekerjaan Ayah', 'pekerjaan_ayah', item.pekerjaan_ayah, 'PEKERJAAN')}
                 </div>
-                ${renderField('Pendidikan Ayah', 'pendidikan_ayah', pendidikanAyahVal)}
+                ${renderCodeSelectField('Pendidikan Ayah', 'pendidikan_ayah', pendidikanAyahVal, 'PENDIDIKAN')}
                 ${renderField('Nama Ibu', 'nama_ibu', item.nama_ibu)}
                 ${renderField('NIK Ibu', 'nik_ibu', nikIbuVal)}
                 <div class="grid grid-cols-2 gap-4">
                     ${renderField('Tahun Lahir Ibu', 'tahun_lahir_ibu', thnIbuVal)}
-                    ${renderField('Pekerjaan Ibu', 'pekerjaan_ibu', item.pekerjaan_ibu)}
+                    ${renderCodeSelectField('Pekerjaan Ibu', 'pekerjaan_ibu', item.pekerjaan_ibu, 'PEKERJAAN')}
                 </div>
-                ${renderField('Pendidikan Ibu', 'pendidikan_ibu', pendidikanIbuVal)}
+                ${renderCodeSelectField('Pendidikan Ibu', 'pendidikan_ibu', pendidikanIbuVal, 'PENDIDIKAN')}
                 ${renderField('No HP / WhatsApp', 'no_hp', item.no_hp)}
 
                 <div class="mt-8 p-6 bg-blue-50 rounded-xl border border-blue-100">

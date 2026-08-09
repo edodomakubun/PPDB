@@ -130,7 +130,14 @@ function formatCodeLabel(category, code) {
     const dict = LOOKUP_CODES[category];
     if (!dict) return code || '';
     const label = dict[code];
-    return label ? `${code} (${label})` : code;
+    return label ? `${label} (Kode: ${code})` : code;
+}
+
+function getCodeLabel(category, code) {
+    if (!code) return '';
+    const dict = LOOKUP_CODES[category];
+    if (!dict) return code;
+    return dict[code] || code;
 }
 
 /**
@@ -499,3 +506,4 @@ window.mapAgamaToCode = mapAgamaToCode;
 window.mapPekerjaanToCode = mapPekerjaanToCode;
 window.mapPendidikanToCode = mapPendidikanToCode;
 window.formatCodeLabel = formatCodeLabel;
+window.getCodeLabel = getCodeLabel;
