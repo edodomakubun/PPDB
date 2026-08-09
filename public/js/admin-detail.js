@@ -100,7 +100,7 @@ async function renderForm(item) {
     // Filter out known static fields to identify dynamic custom fields
     const knownColumns = [
         'nama_lengkap', 'nik', 'tempat_lahir', 'tanggal_lahir',
-        'jenis_kelamin', 'agama', 'alamat', 'asal_sekolah',
+        'jenis_kelamin', 'agama', 'alamat', 'kode_wilayah', 'asal_sekolah',
         'no_kk', 'nama_ayah', 'nik_ayah', 'tahun_lahir_ayah', 'pekerjaan_ayah', 'pendidikan_ayah',
         'nama_ibu', 'nik_ibu', 'tahun_lahir_ibu', 'pekerjaan_ibu', 'pendidikan_ibu', 'no_hp'
     ];
@@ -114,6 +114,7 @@ async function renderForm(item) {
     const thnIbuVal = item.tahun_lahir_ibu || (item.custom_data && item.custom_data.tahun_lahir_ibu) || '';
     const pendidikanAyahVal = item.pendidikan_ayah || (item.custom_data && item.custom_data.pendidikan_ayah) || '';
     const pendidikanIbuVal = item.pendidikan_ibu || (item.custom_data && item.custom_data.pendidikan_ibu) || '';
+    const kodeWilayahVal = item.kode_wilayah || (item.custom_data && item.custom_data.kode_wilayah) || '';
 
     let customFieldsHTML = '';
     if (customFields.length > 0) {
@@ -190,11 +191,12 @@ async function renderForm(item) {
                     ${renderField('Tanggal Lahir', 'tanggal_lahir', item.tanggal_lahir, 'date')}
                 </div>
                 ${renderField('Jenis Kelamin', 'jenis_kelamin', item.jenis_kelamin)}
-                ${renderField('Agama', 'agama', item.agama)}
+                ${renderField('Agama (Kode)', 'agama', item.agama)}
                 <div class="mb-4">
                     <label class="block text-sm font-semibold text-slate-600 mb-1">Alamat</label>
                     <textarea name="alamat" class="data-field w-full px-4 py-2 border border-slate-300 rounded-lg text-slate-900 bg-slate-50 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" rows="3" disabled>${item.alamat || ''}</textarea>
                 </div>
+                ${renderField('Kode Wilayah', 'kode_wilayah', kodeWilayahVal)}
                 ${renderField('Asal Sekolah', 'asal_sekolah', item.asal_sekolah)}
             </div>
 
@@ -332,6 +334,8 @@ async function scanExistingKKOCR() {
             'pekerjaan_ibu': data.pekerjaan_ibu,
             'pendidikan_ayah': data.pendidikan_ayah,
             'pendidikan_ibu': data.pendidikan_ibu,
+            'agama': data.agama,
+            'kode_wilayah': data.kode_wilayah,
             'nama_ayah': data.nama_ayah,
             'nama_ibu': data.nama_ibu
         };
@@ -356,14 +360,23 @@ async function scanExistingKKOCR() {
                     'nik_ibu': 'NIK Ibu',
                     'tahun_lahir_ayah': 'Thn Lahir Ayah',
                     'tahun_lahir_ibu': 'Thn Lahir Ibu',
-                    'pekerjaan_ayah': 'Pekerjaan Ayah',
-                    'pekerjaan_ibu': 'Pekerjaan Ibu',
-                    'pendidikan_ayah': 'Pendidikan Ayah',
-                    'pendidikan_ibu': 'Pendidikan Ibu',
+                    'pekerjaan_ayah': 'Pekerjaan Ayah (Kode)',
+                    'pekerjaan_ibu': 'Pekerjaan Ibu (Kode)',
+                    'pendidikan_ayah': 'Pendidikan Ayah (Kode)',
+                    'pendidikan_ibu': 'Pendidikan Ibu (Kode)',
+                    'agama': 'Agama (Kode)',
+                    'kode_wilayah': 'Kode Wilayah',
                     'nama_ayah': 'Nama Ayah',
                     'nama_ibu': 'Nama Ibu'
                 };
-                summaryHTML += `<li><strong class="text-slate-700">${labelMap[fieldName] || fieldName}:</strong> <span class="text-blue-600 font-bold">${val}</span></li>`;
+
+                let displayVal = val;
+                if (fieldName === 'agama') displayVal = formatCodeLabel('AGAMA', val);
+                else if (fieldName === 'pekerjaan_ayah' || fieldName === 'pekerjaan_ibu') displayVal = formatCodeLabel('PEKERJAAN', val);
+                else if (fieldName === 'pendidikan_ayah' || fieldName === 'pendidikan_ibu') displayVal = formatCodeLabel('PENDIDIKAN', val);
+                else if (fieldName === 'kode_wilayah') displayVal = formatCodeLabel('WILAYAH', val);
+
+                summaryHTML += `<li><strong class="text-slate-700">${labelMap[fieldName] || fieldName}:</strong> <span class="text-blue-600 font-bold">${displayVal}</span></li>`;
             }
         }
 

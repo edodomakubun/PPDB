@@ -86,6 +86,9 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'pendaftaran' AND column_name = 'pendidikan_ibu') THEN
         ALTER TABLE public.pendaftaran ADD COLUMN pendidikan_ibu TEXT;
     END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'pendaftaran' AND column_name = 'kode_wilayah') THEN
+        ALTER TABLE public.pendaftaran ADD COLUMN kode_wilayah TEXT;
+    END IF;
 END $$;
 
 ALTER TABLE public.pendaftaran ENABLE ROW LEVEL SECURITY;
@@ -193,24 +196,25 @@ BEGIN
         ('Tempat Lahir', 'tempat_lahir', 'text', true, 'identity', 3, NULL),
         ('Tanggal Lahir', 'tanggal_lahir', 'date', true, 'identity', 4, NULL),
         ('Jenis Kelamin', 'jenis_kelamin', 'select', true, 'identity', 5, 'Laki-laki,Perempuan'),
-        ('Agama', 'agama', 'select', true, 'identity', 6, 'Islam,Kristen,Katolik,Hindu,Buddha,Konghucu'),
+        ('Agama', 'agama', 'select', true, 'identity', 6, '1:Islam,2:Kristen,3:Katholik,4:Hindu,5:Budha,6:Khonghucu,7:Kepercayaan kpd Tuhan YME,99:Lainnya'),
         ('Alamat Lengkap', 'alamat', 'textarea', true, 'identity', 7, NULL),
-        ('Asal Sekolah', 'asal_sekolah', 'text', false, 'identity', 8, NULL),
-        ('No. Kartu Keluarga (KK)', 'no_kk', 'number', true, 'parents', 9, NULL),
-        ('Nama Ayah', 'nama_ayah', 'text', true, 'parents', 10, NULL),
-        ('NIK Ayah', 'nik_ayah', 'number', false, 'parents', 11, NULL),
-        ('Tahun Lahir Ayah', 'tahun_lahir_ayah', 'number', false, 'parents', 12, NULL),
-        ('Pekerjaan Ayah', 'pekerjaan_ayah', 'text', false, 'parents', 13, NULL),
-        ('Pendidikan Ayah', 'pendidikan_ayah', 'text', false, 'parents', 14, NULL),
-        ('Nama Ibu', 'nama_ibu', 'text', true, 'parents', 15, NULL),
-        ('NIK Ibu', 'nik_ibu', 'number', false, 'parents', 16, NULL),
-        ('Tahun Lahir Ibu', 'tahun_lahir_ibu', 'number', false, 'parents', 17, NULL),
-        ('Pekerjaan Ibu', 'pekerjaan_ibu', 'text', false, 'parents', 18, NULL),
-        ('Pendidikan Ibu', 'pendidikan_ibu', 'text', false, 'parents', 19, NULL),
-        ('No. HP / WhatsApp', 'no_hp', 'number', true, 'parents', 20, NULL),
-        ('Pas Foto (Maks 2MB)', 'file_foto', 'file', true, 'files', 21, NULL),
-        ('Kartu Keluarga (KK)', 'file_kk', 'file', true, 'files', 22, NULL),
-        ('Akta Kelahiran', 'file_akte', 'file', true, 'files', 23, NULL);
+        ('Kode Wilayah', 'kode_wilayah', 'text', false, 'identity', 8, NULL),
+        ('Asal Sekolah', 'asal_sekolah', 'text', false, 'identity', 9, NULL),
+        ('No. Kartu Keluarga (KK)', 'no_kk', 'number', true, 'parents', 10, NULL),
+        ('Nama Ayah', 'nama_ayah', 'text', true, 'parents', 11, NULL),
+        ('NIK Ayah', 'nik_ayah', 'number', false, 'parents', 12, NULL),
+        ('Tahun Lahir Ayah', 'tahun_lahir_ayah', 'number', false, 'parents', 13, NULL),
+        ('Pekerjaan Ayah', 'pekerjaan_ayah', 'select', false, 'parents', 14, '1:Tidak bekerja,2:Nelayan,3:Petani,4:Peternak,5:PNS/TNI/Polri,6:Karyawan Swasta,7:Pedagang Kecil,8:Pedagang Besar,9:Wiraswasta,10:Wirausaha,11:Buruh,12:Pensiunan,13:Tenaga Kerja Indonesia,14:Karyawan BUMN,90:Tidak dapat diterapkan,98:Sudah Meninggal,99:Lainnya'),
+        ('Pendidikan Ayah', 'pendidikan_ayah', 'select', false, 'parents', 15, '0:Tidak sekolah,1:PAUD,2:TK / sederajat,3:Putus SD,4:SD / sederajat,5:SMP / sederajat,6:SMA / sederajat,7:Paket A,8:Paket B,9:Paket C,20:D1,21:D2,22:D3,23:D4,30:S1,31:Profesi,32:Sp-1,35:S2'),
+        ('Nama Ibu', 'nama_ibu', 'text', true, 'parents', 16, NULL),
+        ('NIK Ibu', 'nik_ibu', 'number', false, 'parents', 17, NULL),
+        ('Tahun Lahir Ibu', 'tahun_lahir_ibu', 'number', false, 'parents', 18, NULL),
+        ('Pekerjaan Ibu', 'pekerjaan_ibu', 'select', false, 'parents', 19, '1:Tidak bekerja,2:Nelayan,3:Petani,4:Peternak,5:PNS/TNI/Polri,6:Karyawan Swasta,7:Pedagang Kecil,8:Pedagang Besar,9:Wiraswasta,10:Wirausaha,11:Buruh,12:Pensiunan,13:Tenaga Kerja Indonesia,14:Karyawan BUMN,90:Tidak dapat diterapkan,98:Sudah Meninggal,99:Lainnya'),
+        ('Pendidikan Ibu', 'pendidikan_ibu', 'select', false, 'parents', 20, '0:Tidak sekolah,1:PAUD,2:TK / sederajat,3:Putus SD,4:SD / sederajat,5:SMP / sederajat,6:SMA / sederajat,7:Paket A,8:Paket B,9:Paket C,20:D1,21:D2,22:D3,23:D4,30:S1,31:Profesi,32:Sp-1,35:S2'),
+        ('No. HP / WhatsApp', 'no_hp', 'number', true, 'parents', 21, NULL),
+        ('Pas Foto (Maks 2MB)', 'file_foto', 'file', true, 'files', 22, NULL),
+        ('Kartu Keluarga (KK)', 'file_kk', 'file', true, 'files', 23, NULL),
+        ('Akta Kelahiran', 'file_akte', 'file', true, 'files', 24, NULL);
     END IF;
 END $$;
 

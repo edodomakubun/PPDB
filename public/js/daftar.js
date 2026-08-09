@@ -236,6 +236,8 @@ async function handleScanKKOCR() {
             'pekerjaan_ibu': data.pekerjaan_ibu,
             'pendidikan_ayah': data.pendidikan_ayah,
             'pendidikan_ibu': data.pendidikan_ibu,
+            'agama': data.agama,
+            'kode_wilayah': data.kode_wilayah,
             'nama_ayah': data.nama_ayah,
             'nama_ibu': data.nama_ibu
         };
@@ -260,14 +262,23 @@ async function handleScanKKOCR() {
                     'nik_ibu': 'NIK Ibu',
                     'tahun_lahir_ayah': 'Thn Lahir Ayah',
                     'tahun_lahir_ibu': 'Thn Lahir Ibu',
-                    'pekerjaan_ayah': 'Pekerjaan Ayah',
-                    'pekerjaan_ibu': 'Pekerjaan Ibu',
-                    'pendidikan_ayah': 'Pendidikan Ayah',
-                    'pendidikan_ibu': 'Pendidikan Ibu',
+                    'pekerjaan_ayah': 'Pekerjaan Ayah (Kode)',
+                    'pekerjaan_ibu': 'Pekerjaan Ibu (Kode)',
+                    'pendidikan_ayah': 'Pendidikan Ayah (Kode)',
+                    'pendidikan_ibu': 'Pendidikan Ibu (Kode)',
+                    'agama': 'Agama (Kode)',
+                    'kode_wilayah': 'Kode Wilayah',
                     'nama_ayah': 'Nama Ayah',
                     'nama_ibu': 'Nama Ibu'
                 };
-                summaryHTML += `<li><strong class="text-slate-700">${labelMap[fieldName] || fieldName}:</strong> <span class="text-blue-600 font-bold">${val}</span></li>`;
+
+                let displayVal = val;
+                if (fieldName === 'agama') displayVal = formatCodeLabel('AGAMA', val);
+                else if (fieldName === 'pekerjaan_ayah' || fieldName === 'pekerjaan_ibu') displayVal = formatCodeLabel('PEKERJAAN', val);
+                else if (fieldName === 'pendidikan_ayah' || fieldName === 'pendidikan_ibu') displayVal = formatCodeLabel('PENDIDIKAN', val);
+                else if (fieldName === 'kode_wilayah') displayVal = formatCodeLabel('WILAYAH', val);
+
+                summaryHTML += `<li><strong class="text-slate-700">${labelMap[fieldName] || fieldName}:</strong> <span class="text-blue-600 font-bold">${displayVal}</span></li>`;
             }
         }
 

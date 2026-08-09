@@ -1,6 +1,7 @@
 /**
  * AI OCR Engine for Kartu Keluarga (KK) Extraction
  * Uses Google Gemini Vision API (Supports Images & PDF Documents with High-Precision Parsing)
+ * Standardized Database Code Mappings (Agama, Pekerjaan, Pendidikan, Kode Wilayah)
  */
 
 const OCR_CONFIG = {
@@ -8,6 +9,129 @@ const OCR_CONFIG = {
     FALLBACK_MODEL: 'gemini-1.5-flash',
     API_URL: 'https://generativelanguage.googleapis.com/v1beta/models'
 };
+
+const LOOKUP_CODES = {
+    AGAMA: {
+        '1': 'Islam',
+        '2': 'Kristen',
+        '3': 'Katholik',
+        '4': 'Hindu',
+        '5': 'Budha',
+        '6': 'Khonghucu',
+        '7': 'Kepercayaan kpd Tuhan YME',
+        '99': 'Lainnya'
+    },
+    PENDIDIKAN: {
+        '0': 'Tidak sekolah',
+        '1': 'PAUD',
+        '2': 'TK / sederajat',
+        '3': 'Putus SD',
+        '4': 'SD / sederajat',
+        '5': 'SMP / sederajat',
+        '6': 'SMA / sederajat',
+        '7': 'Paket A',
+        '8': 'Paket B',
+        '9': 'Paket C',
+        '20': 'D1',
+        '21': 'D2',
+        '22': 'D3',
+        '23': 'D4',
+        '30': 'S1',
+        '31': 'Profesi',
+        '32': 'Sp-1',
+        '35': 'S2'
+    },
+    PEKERJAAN: {
+        '1': 'Tidak bekerja',
+        '2': 'Nelayan',
+        '3': 'Petani',
+        '4': 'Peternak',
+        '5': 'PNS/TNI/Polri',
+        '6': 'Karyawan Swasta',
+        '7': 'Pedagang Kecil',
+        '8': 'Pedagang Besar',
+        '9': 'Wiraswasta',
+        '10': 'Wirausaha',
+        '11': 'Buruh',
+        '12': 'Pensiunan',
+        '13': 'Tenaga Kerja Indonesia',
+        '14': 'Karyawan BUMN',
+        '90': 'Tidak dapat diterapkan',
+        '98': 'Sudah Meninggal',
+        '99': 'Lainnya'
+    },
+    WILAYAH: {
+        '210405AA': 'Lelingluan - Kec. Tanimbar Utara - Kab. Kepulauan Tanimbar'
+    }
+};
+
+function mapAgamaToCode(val) {
+    if (!val) return '99';
+    const str = String(val).trim().toLowerCase();
+    if (LOOKUP_CODES.AGAMA[str]) return str;
+    if (str.includes('islam')) return '1';
+    if (str.includes('kristen')) return '2';
+    if (str.includes('katolik') || str.includes('katholik')) return '3';
+    if (str.includes('hindu')) return '4';
+    if (str.includes('budha') || str.includes('buddha')) return '5';
+    if (str.includes('khonghucu') || str.includes('konghucu')) return '6';
+    if (str.includes('tuhan') || str.includes('kepercayaan')) return '7';
+    return '99';
+}
+
+function mapPekerjaanToCode(val) {
+    if (!val) return '1';
+    const str = String(val).trim().toLowerCase();
+    if (LOOKUP_CODES.PEKERJAAN[str]) return str;
+    if (str.includes('tidak') || str.includes('belum') || str.includes('rumah tangga')) return '1';
+    if (str.includes('nelayan') || str.includes('perikanan')) return '2';
+    if (str.includes('petani') || str.includes('pekebun')) return '3';
+    if (str.includes('peternak')) return '4';
+    if (str.includes('pns') || str.includes('tni') || str.includes('polri') || str.includes('negeri')) return '5';
+    if (str.includes('karyawan swasta') || str.includes('swasta')) return '6';
+    if (str.includes('pedagang kecil') || str.includes('dagang')) return '7';
+    if (str.includes('pedagang besar')) return '8';
+    if (str.includes('wiraswasta')) return '9';
+    if (str.includes('wirausaha')) return '10';
+    if (str.includes('buruh')) return '11';
+    if (str.includes('pensiun')) return '12';
+    if (str.includes('tki') || str.includes('tenaga kerja indonesia')) return '13';
+    if (str.includes('bumn')) return '14';
+    if (str.includes('meninggal')) return '98';
+    return '99';
+}
+
+function mapPendidikanToCode(val) {
+    if (!val) return '0';
+    const str = String(val).trim().toLowerCase();
+    if (LOOKUP_CODES.PENDIDIKAN[str]) return str;
+    if (str.includes('tidak') || str.includes('belum')) return '0';
+    if (str.includes('paud')) return '1';
+    if (str.includes('tk')) return '2';
+    if (str.includes('putus')) return '3';
+    if (str.includes('smp') || str.includes('sltp')) return '5';
+    if (str.includes('sma') || str.includes('slta') || str.includes('smk')) return '6';
+    if (str.includes('sd') || str.includes('sederajat')) return '4';
+    if (str.includes('paket a')) return '7';
+    if (str.includes('paket b')) return '8';
+    if (str.includes('paket c')) return '9';
+    if (str.includes('d1') || str.includes('diploma i')) return '20';
+    if (str.includes('d2') || str.includes('diploma ii')) return '21';
+    if (str.includes('d3') || str.includes('diploma iii')) return '22';
+    if (str.includes('d4') || str.includes('diploma iv')) return '23';
+    if (str.includes('s1') || str.includes('strata i') || str.includes('sarjana')) return '30';
+    if (str.includes('profesi')) return '31';
+    if (str.includes('sp-1') || str.includes('sp1')) return '32';
+    if (str.includes('s2') || str.includes('strata ii') || str.includes('magister')) return '35';
+    return '0';
+}
+
+function formatCodeLabel(category, code) {
+    const dict = LOOKUP_CODES[category];
+    if (!dict) return code || '';
+    const label = dict[code];
+    return label ? `${code} (${label})` : code;
+}
 
 /**
  * Get Gemini API Key from Supabase app_settings or localStorage
@@ -166,7 +290,7 @@ async function promptForApiKey() {
  * @param {File} imageFile 
  * @param {string} overrideApiKey 
  * @param {string} studentName 
- * @returns {Promise<Object>} Extracted KK data object
+ * @returns {Promise<Object>} Extracted KK data object with standardized code conversions
  */
 async function processKartuKeluargaOCR(imageFile, overrideApiKey = null, studentName = null) {
     if (!imageFile) {
@@ -213,7 +337,7 @@ METODE MATCHING ORANG TUA KARTU KELUARGA ALGORITMA PRESISI:
      * "nik_ayah": 16 digit NIK dari kolom NIK pada baris Ayah tersebut.
      * "tahun_lahir_ayah": 4 digit tahun lahir (YYYY) dari kolom Tanggal Lahir pada baris Ayah tersebut.
      * "pekerjaan_ayah": Jenis pekerjaan dari kolom Jenis Pekerjaan pada baris Ayah tersebut.
-     * "pendidikan_ayah": Jenjang/tingkat pendidikan dari kolom Pendidikan pada baris Ayah tersebut (misal: "SD/SEDERAJAT", "SLTP/SEDERAJAT", "SLTA/SEDERAJAT", "DIPLOMA III", "STRATA I", "TIDAK/BELUM SEKOLAH", dll).
+     * "pendidikan_ayah": Jenjang/tingkat pendidikan dari kolom Pendidikan pada baris Ayah tersebut.
 
    - **DATA IBU**:
      * Cari baris pada Tabel 1 yang "Nama Lengkap"-nya cocok dengan Nama Ibu tersebut (atau yang berstatus "ISTRI" / "ISTERI" / "IBU").
@@ -223,25 +347,32 @@ METODE MATCHING ORANG TUA KARTU KELUARGA ALGORITMA PRESISI:
      * "pekerjaan_ibu": Jenis pekerjaan dari kolom Jenis Pekerjaan pada baris Ibu tersebut.
      * "pendidikan_ibu": Jenjang/tingkat pendidikan dari kolom Pendidikan pada baris Ibu tersebut.
 
-3. NOMOR KARTU KELUARGA ("no_kk"):
-   - 16 digit Nomor Kartu Keluarga dari header atas dokumen KK.
+3. AGAMA DAN KODE WILAYAH:
+   - "agama": Agama anggota keluarga (misal: "Islam", "Kristen", "Katolik", "Hindu", "Budha", "Khonghucu").
+   - "kode_wilayah": "210405AA" (Kode Wilayah Default Lelingluan - Tanimbar).
+   - "no_kk": 16 digit Nomor Kartu Keluarga dari header atas.
 
-BERIKAN RESPON HANYA DALAM FORMAT JSON MURNI TANPA MARKDOWN ATAU TEKS TAMBAHAN. CONTOH:
+STANDAR KODE TERHUBUNG (SANGAT PENTING):
+- Konversikan Pekerjaan ke Kode: 1=Tidak bekerja, 2=Nelayan, 3=Petani, 4=Peternak, 5=PNS/TNI/Polri, 6=Karyawan Swasta, 7=Pedagang Kecil, 8=Pedagang Besar, 9=Wiraswasta, 10=Wirausaha, 11=Buruh, 12=Pensiunan, 13=TKI, 14=Karyawan BUMN, 90=Tidak dapat diterapkan, 98=Sudah Meninggal, 99=Lainnya.
+- Konversikan Pendidikan ke Kode: 0=Tidak sekolah, 1=PAUD, 2=TK/sederajat, 3=Putus SD, 4=SD/sederajat, 5=SMP/sederajat, 6=SMA/sederajat, 7=Paket A, 8=Paket B, 9=Paket C, 20=D1, 21=D2, 22=D3, 23=D4, 30=S1, 31=Profesi, 32=Sp-1, 35=S2.
+- Konversikan Agama ke Kode: 1=Islam, 2=Kristen, 3=Katholik, 4=Hindu, 5=Budha, 6=Khonghucu, 7=Kepercayaan, 99=Lainnya.
+
+BERIKAN RESPON HANYA DALAM FORMAT JSON MURNI TANPA MARKDOWN. CONTOH:
 {
   "no_kk": "8101010101010001",
   "nama_ayah": "Ahmad",
   "nik_ayah": "8101011205800001",
   "tahun_lahir_ayah": "1980",
-  "pekerjaan_ayah": "Petani/Pekebun",
-  "pendidikan_ayah": "SLTA/SEDERAJAT",
+  "pekerjaan_ayah": "3",
+  "pendidikan_ayah": "6",
   "nama_ibu": "Siti",
   "nik_ibu": "8101014502830002",
   "tahun_lahir_ibu": "1983",
-  "pekerjaan_ibu": "Mengurus Rumah Tangga",
-  "pendidikan_ibu": "SLTP/SEDERAJAT"
-}
-
-Jika ada bidang data yang tidak terlihat atau tidak ada pada dokumen, berikan nilai null.`;
+  "pekerjaan_ibu": "1",
+  "pendidikan_ibu": "5",
+  "agama": "1",
+  "kode_wilayah": "210405AA"
+}`;
 
     const requestPayload = {
         contents: [
@@ -314,7 +445,7 @@ Jika ada bidang data yang tidak terlihat atau tidak ada pada dokumen, berikan ni
         throw new Error('Format keluaran dari OCR AI tidak valid: ' + parseErr.message);
     }
 
-    // Post-processing cleanup for max precision
+    // Post-processing code normalization
     if (extractedData) {
         // Clean 16 digit numbers if spaces/hyphens are present
         ['no_kk', 'nik_ayah', 'nik_ibu'].forEach(key => {
@@ -335,13 +466,26 @@ Jika ada bidang data yang tidak terlihat atau tidak ada pada dokumen, berikan ni
                 }
             }
         });
+
+        // Map text values to standardized codes
+        if (extractedData.agama) extractedData.agama = mapAgamaToCode(extractedData.agama);
+        if (extractedData.pekerjaan_ayah) extractedData.pekerjaan_ayah = mapPekerjaanToCode(extractedData.pekerjaan_ayah);
+        if (extractedData.pekerjaan_ibu) extractedData.pekerjaan_ibu = mapPekerjaanToCode(extractedData.pekerjaan_ibu);
+        if (extractedData.pendidikan_ayah) extractedData.pendidikan_ayah = mapPendidikanToCode(extractedData.pendidikan_ayah);
+        if (extractedData.pendidikan_ibu) extractedData.pendidikan_ibu = mapPendidikanToCode(extractedData.pendidikan_ibu);
+        extractedData.kode_wilayah = '210405AA';
     }
 
     return extractedData;
 }
 
-// Expose OCR module to window
+// Expose OCR module and lookup utilities to window
 window.processKartuKeluargaOCR = processKartuKeluargaOCR;
 window.getGeminiApiKey = getGeminiApiKey;
 window.saveGeminiApiKey = saveGeminiApiKey;
 window.promptForApiKey = promptForApiKey;
+window.LOOKUP_CODES = LOOKUP_CODES;
+window.mapAgamaToCode = mapAgamaToCode;
+window.mapPekerjaanToCode = mapPekerjaanToCode;
+window.mapPendidikanToCode = mapPendidikanToCode;
+window.formatCodeLabel = formatCodeLabel;
