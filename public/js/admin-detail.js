@@ -101,13 +101,14 @@ async function renderForm(item) {
     const knownColumns = [
         'nama_lengkap', 'nik', 'tempat_lahir', 'tanggal_lahir',
         'jenis_kelamin', 'agama', 'alamat', 'asal_sekolah',
-        'no_kk', 'nama_ayah', 'tahun_lahir_ayah', 'pekerjaan_ayah',
+        'no_kk', 'nama_ayah', 'nik_ayah', 'tahun_lahir_ayah', 'pekerjaan_ayah',
         'nama_ibu', 'nik_ibu', 'tahun_lahir_ibu', 'pekerjaan_ibu', 'no_hp'
     ];
     const fileFields = ['file_foto', 'file_kk', 'file_akte'];
     const customFields = formFields.filter(f => !knownColumns.includes(f.name) && !fileFields.includes(f.name));
 
     const noKkVal = item.no_kk || (item.custom_data && item.custom_data.no_kk) || '';
+    const nikAyahVal = item.nik_ayah || (item.custom_data && item.custom_data.nik_ayah) || '';
     const nikIbuVal = item.nik_ibu || (item.custom_data && item.custom_data.nik_ibu) || '';
     const thnAyahVal = item.tahun_lahir_ayah || (item.custom_data && item.custom_data.tahun_lahir_ayah) || '';
     const thnIbuVal = item.tahun_lahir_ibu || (item.custom_data && item.custom_data.tahun_lahir_ibu) || '';
@@ -200,6 +201,7 @@ async function renderForm(item) {
                 <h2 class="text-lg font-bold text-slate-900 mb-6 border-b border-slate-200 pb-2">Data Orang Tua / Wali</h2>
                 ${renderField('No. Kartu Keluarga (KK)', 'no_kk', noKkVal)}
                 ${renderField('Nama Ayah', 'nama_ayah', item.nama_ayah)}
+                ${renderField('NIK Ayah', 'nik_ayah', nikAyahVal)}
                 <div class="grid grid-cols-2 gap-4">
                     ${renderField('Tahun Lahir Ayah', 'tahun_lahir_ayah', thnAyahVal)}
                     ${renderField('Pekerjaan Ayah', 'pekerjaan_ayah', item.pekerjaan_ayah)}
@@ -317,6 +319,7 @@ async function scanExistingKKOCR() {
         // Target fields to map
         const fieldMapping = {
             'no_kk': data.no_kk,
+            'nik_ayah': data.nik_ayah,
             'nik_ibu': data.nik_ibu,
             'tahun_lahir_ayah': data.tahun_lahir_ayah,
             'tahun_lahir_ibu': data.tahun_lahir_ibu,
@@ -342,6 +345,7 @@ async function scanExistingKKOCR() {
                 }
                 const labelMap = {
                     'no_kk': 'No. KK',
+                    'nik_ayah': 'NIK Ayah',
                     'nik_ibu': 'NIK Ibu',
                     'tahun_lahir_ayah': 'Thn Lahir Ayah',
                     'tahun_lahir_ibu': 'Thn Lahir Ibu',

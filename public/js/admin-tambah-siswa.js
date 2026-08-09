@@ -196,6 +196,7 @@ async function handleScanKKOCR() {
 
         const fieldMapping = {
             'no_kk': data.no_kk,
+            'nik_ayah': data.nik_ayah,
             'nik_ibu': data.nik_ibu,
             'tahun_lahir_ayah': data.tahun_lahir_ayah,
             'tahun_lahir_ibu': data.tahun_lahir_ibu,
@@ -221,6 +222,7 @@ async function handleScanKKOCR() {
                 }
                 const labelMap = {
                     'no_kk': 'No. KK',
+                    'nik_ayah': 'NIK Ayah',
                     'nik_ibu': 'NIK Ibu',
                     'tahun_lahir_ayah': 'Thn Lahir Ayah',
                     'tahun_lahir_ibu': 'Thn Lahir Ibu',

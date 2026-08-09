@@ -199,17 +199,19 @@ async function processKartuKeluargaOCR(imageFile, overrideApiKey = null) {
 Analisis dokumen Kartu Keluarga ini dan ekstrak informasi penting berikut ke dalam format JSON terstruktur:
 
 1. "no_kk": Nomor Kartu Keluarga (16 digit angka, terletak di header atas dokumen KK).
-2. "nik_ibu": NIK Ibu (16 digit angka NIK milik anggota keluarga berstatus Hubungan Ibu / Isteri).
-3. "tahun_lahir_ayah": Tahun lahir Ayah (4 digit tahun angka, misal 1980, diambil dari kolom Tanggal Lahir / NIK milik Ayah / Kepala Keluarga).
-4. "tahun_lahir_ibu": Tahun lahir Ibu (4 digit tahun angka, misal 1983, diambil dari kolom Tanggal Lahir / NIK milik Ibu / Isteri).
-5. "pekerjaan_ayah": Jenis pekerjaan Ayah (teks pekerjaan milik Ayah, misal: 'PNS', 'Petani', 'Wiraswasta', 'Karyawan Swasta', 'Nelayan', dll).
-6. "pekerjaan_ibu": Jenis pekerjaan Ibu (teks pekerjaan milik Ibu, misal: 'Mengurus Rumah Tangga', 'PNS', 'Pedagang', 'Guru', dll).
-7. "nama_ayah": Nama lengkap Ayah / Kepala Keluarga (opsional jika terlihat jelas).
-8. "nama_ibu": Nama lengkap Ibu (opsional jika terlihat jelas).
+2. "nik_ayah": NIK Ayah (16 digit angka NIK milik anggota keluarga berstatus Kepala Keluarga / Suami / Ayah).
+3. "nik_ibu": NIK Ibu (16 digit angka NIK milik anggota keluarga berstatus Hubungan Ibu / Isteri).
+4. "tahun_lahir_ayah": Tahun lahir Ayah (4 digit tahun angka, misal 1980, diambil dari kolom Tanggal Lahir / NIK milik Ayah / Kepala Keluarga).
+5. "tahun_lahir_ibu": Tahun lahir Ibu (4 digit tahun angka, misal 1983, diambil dari kolom Tanggal Lahir / NIK milik Ibu / Isteri).
+6. "pekerjaan_ayah": Jenis pekerjaan Ayah (teks pekerjaan milik Ayah, misal: 'PNS', 'Petani', 'Wiraswasta', 'Karyawan Swasta', 'Nelayan', dll).
+7. "pekerjaan_ibu": Jenis pekerjaan Ibu (teks pekerjaan milik Ibu, misal: 'Mengurus Rumah Tangga', 'PNS', 'Pedagang', 'Guru', dll).
+8. "nama_ayah": Nama lengkap Ayah / Kepala Keluarga (opsional jika terlihat jelas).
+9. "nama_ibu": Nama lengkap Ibu (opsional jika terlihat jelas).
 
 BERIKAN RESPON DALAM FORMAT JSON MURNI TANPA MARKDOWN ATAU TEKS LAINNYA. CONTOH:
 {
   "no_kk": "8101010101010001",
+  "nik_ayah": "8101011205800001",
   "nik_ibu": "8101014502830002",
   "tahun_lahir_ayah": "1980",
   "tahun_lahir_ibu": "1983",
