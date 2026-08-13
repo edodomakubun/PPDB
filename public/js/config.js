@@ -394,9 +394,9 @@ async function checkGlobalMaintenanceMode() {
     try {
         const currentPath = window.location.pathname;
 
-        const isAdminPage = currentPath.includes('/admin/');
-        const isLoginPage = currentPath.includes('login.html');
-        const isMaintenancePage = currentPath.includes('maintenance.html');
+        const isAdminPage = currentPath.includes('/admin/') || currentPath.includes('admin');
+        const isLoginPage = currentPath.includes('login');
+        const isMaintenancePage = currentPath.includes('maintenance');
 
         // Admin pages, login page, and maintenance page are never blocked by overlay
         if (isMaintenancePage || isLoginPage || isAdminPage) {
