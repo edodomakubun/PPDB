@@ -51,11 +51,6 @@
             <p id="maintenance-message" class="whitespace-pre-line font-medium text-slate-700">
                 Sistem pendaftaran dan layanan informasi online saat ini sedang dalam pemeliharaan rutin. Silakan kembali beberapa saat lagi.
             </p>
-
-            <div id="estimated-time-box" class="mt-3 pt-3 border-t border-slate-200 text-xs text-amber-700 font-semibold hidden flex items-center gap-1.5">
-                <svg class="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <span>Estimasi Selesai: <strong id="estimated-time-text" class="text-slate-900 font-bold">-</strong></span>
-            </div>
         </div>
 
         <!-- Exactly 1 Login Panitia Button -->
@@ -73,7 +68,6 @@
     <!-- Supabase Configuration & Loader Script -->
     <script src="js/config.js"></script>
     <script>
-        // Load custom message without reload loops
         document.addEventListener('DOMContentLoaded', async () => {
             try {
                 const { data } = await supabaseClient
@@ -84,12 +78,8 @@
 
                 if (data && data.value) {
                     const info = typeof data.value === 'string' ? (data.value.startsWith('{') ? JSON.parse(data.value) : data.value) : data.value;
-                    if (info.message) {
+                    if (info && info.message) {
                         document.getElementById('maintenance-message').innerText = info.message;
-                    }
-                    if (info.estimated_end) {
-                        document.getElementById('estimated-time-text').innerText = info.estimated_end;
-                        document.getElementById('estimated-time-box').classList.remove('hidden');
                     }
                 }
             } catch (err) {

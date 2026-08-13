@@ -554,8 +554,7 @@ window.openMaintenanceStatusModal = async () => {
 
         let maintenanceInfo = {
             enabled: false,
-            message: 'Sistem pendaftaran dan layanan informasi online sedang menjalani pemeliharaan rutin. Silakan kembali lagi beberapa saat lagi.',
-            estimated_end: ''
+            message: 'Sistem pendaftaran dan layanan informasi online saat ini sedang dalam pemeliharaan rutin. Silakan kembali beberapa saat lagi.'
         };
 
         if (data && data.value) {
@@ -592,12 +591,6 @@ window.openMaintenanceStatusModal = async () => {
                         <label class="block text-xs font-bold text-slate-700 mb-1">Pesan Pemeliharaan (Untuk Pengunjung)</label>
                         <textarea id="modal-maint-message" rows="3" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition" placeholder="Tuliskan pesan yang akan dibaca pengunjung publik...">${maintenanceInfo.message || ''}</textarea>
                     </div>
-
-                    <!-- Estimated Completion Input -->
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Estimasi Waktu Selesai (Opsional)</label>
-                        <input type="text" id="modal-maint-estimated" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition" value="${maintenanceInfo.estimated_end || ''}" placeholder="Contoh: 15 Agustus 2026, Pukul 14.00 WIT">
-                    </div>
                 </div>
             `,
             showCancelButton: true,
@@ -619,7 +612,6 @@ window.openMaintenanceStatusModal = async () => {
             preConfirm: async () => {
                 const enabled = document.getElementById('modal-toggle-maint').checked;
                 const message = document.getElementById('modal-maint-message').value.trim();
-                const estimated_end = document.getElementById('modal-maint-estimated').value.trim();
 
                 try {
                     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -627,8 +619,7 @@ window.openMaintenanceStatusModal = async () => {
 
                     const payload = {
                         enabled: enabled,
-                        message: message || 'Sistem PPDB sedang dalam pemeliharaan rutin. Silakan kembali lagi beberapa saat lagi.',
-                        estimated_end: estimated_end,
+                        message: message || 'Sistem pendaftaran dan layanan informasi online saat ini sedang dalam pemeliharaan rutin. Silakan kembali beberapa saat lagi.',
                         updated_at: new Date().toISOString(),
                         updated_by: userEmail
                     };
@@ -638,9 +629,6 @@ window.openMaintenanceStatusModal = async () => {
                         .upsert({ key: 'maintenance_mode', value: payload });
 
                     if (upsertError) throw upsertError;
-
-                    // Sync to localStorage immediately
-                    localStorage.setItem('ppdb_maintenance_mode', JSON.stringify(payload));
 
                     await logActivity(
                         enabled ? 'ENABLE_MAINTENANCE_MODE' : 'DISABLE_MAINTENANCE_MODE',
