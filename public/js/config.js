@@ -390,36 +390,34 @@ window.openRegistrationStatusModal = async () => {
 
 // --- Global Maintenance Mode System ---
 
-// Instant Synchronous Check from localStorage (Prevents Content Flash on Public Pages)
-(function instantMaintenanceCheck() {
-    try {
-        const currentPath = window.location.pathname;
-        const isAdminPage = currentPath.includes('/admin/');
-        const isLoginPage = currentPath.includes('login.html');
-        const isMaintenancePage = currentPath.includes('maintenance.html');
-
-        if (!isAdminPage && !isLoginPage && !isMaintenancePage) {
-            const cachedMaint = localStorage.getItem('ppdb_maintenance_mode');
-            if (cachedMaint) {
-                const parsed = typeof cachedMaint === 'string' ? JSON.parse(cachedMaint) : cachedMaint;
-                if (parsed && parsed.enabled) {
-                    const hasAuthToken = Object.keys(localStorage).some(k => k.includes('auth-token'));
-                    if (!hasAuthToken) {
-                        const targetUrl = currentPath.includes('/admin/') ? '../maintenance.html' : 'maintenance.html';
-                        window.location.href = targetUrl;
-                    }
-                }
-            }
-        }
-    } catch (e) {
-        console.warn('Instant maintenance check warning:', e);
-    }
-})();
-
 async function checkGlobalMaintenanceMode() {
     try {
         const currentPath = window.location.pathname;
 
+        const isAdminPage = currentPath.includes('/admin/');
+        const isLoginPage = currentPath.includes('login.html');
+        const isMaintenancePage = currentPath.includes('maintenance.html');
+
+        // Never redirect if already on maintenance page, login page, or admin panel
+        if (isMaintenancePage || isLoginPage || isAdminPage) {
+            if (isAdminPage) {
+                const { data } = await supabaseClient
+                    .from('app_settings')
+                    .select('value')
+                    .eq('key', 'maintenance_mode')
+                    .maybeSingle();
+
+                if (data && data.value) {
+                    const parsed = typeof data.value === 'string' ? (data.value.startsWith('{') ? JSON.parse(data.value) : data.value) : data.value;
+                    if (parsed && parsed.enabled) {
+                        renderAdminMaintenanceWarningBanner(parsed);
+                    }
+                }
+            }
+            return;
+        }
+
+        // Public page check
         const { data, error } = await supabaseClient
             .from('app_settings')
             .select('value')
@@ -432,39 +430,17 @@ async function checkGlobalMaintenanceMode() {
         if (data && data.value) {
             maintenanceData = typeof data.value === 'string' ? (data.value.startsWith('{') ? JSON.parse(data.value) : data.value) : data.value;
             isMaintenance = !!(maintenanceData && maintenanceData.enabled);
-            // Cache to localStorage for zero-flash load on subsequent page visits
-            localStorage.setItem('ppdb_maintenance_mode', JSON.stringify(maintenanceData));
-        } else {
-            localStorage.setItem('ppdb_maintenance_mode', JSON.stringify({ enabled: false }));
         }
 
-        const isAdminPage = currentPath.includes('/admin/');
-        const isLoginPage = currentPath.includes('login.html');
-        const isMaintenancePage = currentPath.includes('maintenance.html');
-
-        // 1. If Maintenance Mode is Active
         if (isMaintenance) {
-            // Check session
             const { data: { session } } = await supabaseClient.auth.getSession();
             const isAdminLoggedIn = session && session.user;
 
-            if (isAdminPage) {
-                // Admin Page: Show prominent Warning Banner to Admin
-                renderAdminMaintenanceWarningBanner(maintenanceData);
-            } else if (!isLoginPage && !isMaintenancePage) {
-                // Public Page: If NOT admin, redirect to maintenance page
-                if (!isAdminLoggedIn) {
-                    const maintenanceUrl = currentPath.includes('/admin/') ? '../maintenance.html' : 'maintenance.html';
-                    window.location.href = maintenanceUrl;
-                } else {
-                    // Admin viewing public page: Show Admin Notice Banner
-                    renderPublicAdminMaintenanceNotice(maintenanceData);
-                }
+            if (!isAdminLoggedIn) {
+                window.location.href = 'maintenance.html';
+            } else {
+                renderPublicAdminMaintenanceNotice(maintenanceData);
             }
-        } else if (isMaintenancePage) {
-            // If maintenance is OFF and user is on maintenance.html, redirect back to index.html
-            const indexUrl = currentPath.includes('/admin/') ? '../index.html' : 'index.html';
-            window.location.href = indexUrl;
         }
     } catch (err) {
         console.warn('Maintenance check notice:', err);

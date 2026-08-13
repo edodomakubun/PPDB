@@ -1,198 +1,99 @@
 <!DOCTYPE html>
-<html lang="id" class="h-full">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Dalam Pemeliharaan - SD INPRES LELINGLUAN</title>
+    <title>Pemeliharaan Sistem - SD INPRES LELINGLUAN</title>
     <!-- Tailwind CSS v4 -->
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-        }
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-10px) rotate(3deg); }
-        }
-        @keyframes pulseGlow {
-            0%, 100% { opacity: 0.4; transform: scale(1); }
-            50% { opacity: 0.8; transform: scale(1.05); }
-        }
-        .animate-float { animation: float 6s ease-in-out infinite; }
-        .animate-pulse-glow { animation: pulseGlow 4s ease-in-out infinite; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
     </style>
 </head>
-<body class="h-full bg-slate-950 text-slate-100 flex flex-col justify-between items-center relative overflow-x-hidden selection:bg-amber-500 selection:text-slate-950">
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col justify-between items-center p-4 sm:p-6">
 
-    <!-- Ambient Background Elements -->
-    <div class="fixed top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-tr from-amber-600/20 to-orange-500/10 rounded-full blur-3xl pointer-events-none animate-pulse-glow"></div>
-    <div class="fixed bottom-10 left-10 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
-
-    <!-- Admin Top Notice Banner (Dynamic) -->
-    <div id="admin-top-banner" class="w-full bg-slate-900 border-b border-amber-500/40 text-amber-300 px-4 py-2.5 shadow-lg text-xs font-bold z-30 hidden">
-        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
-            <div class="flex items-center gap-2">
-                <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono text-[10px] uppercase">Admin Mode</span>
-                <span id="admin-banner-email">Anda terdeteksi sebagai Panitia (Logged In).</span>
-            </div>
-            <div class="flex items-center gap-2">
-                <button onclick="openMaintenanceStatusModal()" class="px-3 py-1 bg-amber-500 text-slate-950 rounded-lg font-bold hover:bg-amber-400 transition cursor-pointer text-xs">
-                    Matikan / Ubah Maintenance
-                </button>
-                <a href="admin/dashboard.html" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold transition text-xs border border-slate-700">
-                    Buka Panel Admin
-                </a>
-            </div>
+    <!-- Top Header / Logo -->
+    <header class="w-full max-w-lg mx-auto py-6 flex items-center justify-center gap-3">
+        <div class="w-10 h-10 bg-slate-800 text-white rounded-xl flex items-center justify-center font-extrabold text-sm shadow">
+            SD
         </div>
-    </div>
-
-    <!-- Top Header Navigation (Simplified) -->
-    <header class="w-full max-w-6xl mx-auto px-6 py-6 flex items-center justify-between z-10">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center text-white font-black text-lg shadow-lg shadow-orange-500/20">
-                SD
-            </div>
-            <div>
-                <h1 class="font-extrabold text-sm tracking-wide text-white">SD INPRES LELINGLUAN</h1>
-                <p class="text-[11px] text-slate-400 font-medium">Sistem Informasi Penerimaan Siswa Baru</p>
-            </div>
+        <div>
+            <h1 class="font-bold text-base text-slate-900 leading-tight">SD INPRES LELINGLUAN</h1>
+            <p class="text-xs text-slate-500 font-medium">Sistem Informasi Penerimaan Siswa Baru</p>
         </div>
-
-        <a id="btn-header-login" href="login.html" class="px-4 py-2 bg-slate-900/80 hover:bg-slate-800 border border-slate-700/60 rounded-xl text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-2 backdrop-blur-md cursor-pointer shadow-sm">
-            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
-            <span id="text-header-login">Login Panitia</span>
-        </a>
     </header>
 
-    <!-- Main Hero Container -->
-    <main class="w-full max-w-2xl px-6 py-12 my-auto z-10 flex flex-col items-center text-center">
+    <!-- Main Card Container -->
+    <main class="w-full max-w-lg bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm my-auto text-center">
         
-        <!-- Animated Maintenance Badge & Icon -->
-        <div class="relative mb-8 animate-float">
-            <div class="w-24 h-24 sm:w-28 sm:h-28 bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-3xl backdrop-blur-xl flex items-center justify-center text-amber-400 shadow-2xl shadow-amber-500/10">
-                <svg class="w-12 h-12 sm:w-14 sm:h-14 stroke-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
-                </svg>
-            </div>
-            <div class="absolute -bottom-2 right-0 bg-amber-500 text-slate-950 font-black text-[10px] uppercase px-3 py-1 rounded-full shadow-lg border border-amber-300">
-                Maintenance
-            </div>
+        <!-- Icon & Status Badge -->
+        <div class="mx-auto w-16 h-16 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mb-5 border border-amber-200">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
         </div>
 
-        <!-- Tag badge -->
-        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold mb-4">
-            <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
-            Mode Pemeliharaan Sistem Aktif
-        </div>
+        <span class="inline-block px-3 py-1 bg-amber-100 text-amber-800 text-[11px] font-extrabold uppercase rounded-full tracking-wider mb-3">
+            Pemeliharaan Sistem
+        </span>
 
-        <!-- Headline -->
-        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight mb-4">
-            Sistem PPDB Sedang Ditingkatkan
+        <h2 class="text-xl sm:text-2xl font-bold text-slate-900 mb-3">
+            Sistem Sedang Dalam Pemeliharaan
         </h2>
 
-        <!-- Custom Maintenance Message -->
-        <div class="w-full bg-slate-900/90 border border-slate-800 rounded-2xl p-6 mb-8 backdrop-blur-md shadow-xl text-slate-300 text-sm sm:text-base leading-relaxed">
-            <p id="maintenance-message" class="whitespace-pre-line font-medium">
-                Sistem pendaftaran dan layanan informasi online sedang menjalani pemeliharaan rutin untuk meningkatkan kualitas layanan dan keamanan data. Silakan kembali lagi beberapa saat lagi.
+        <!-- Maintenance Message -->
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6 text-slate-600 text-xs sm:text-sm leading-relaxed text-left">
+            <p id="maintenance-message" class="whitespace-pre-line font-medium text-slate-700">
+                Sistem pendaftaran dan layanan informasi online saat ini sedang dalam pemeliharaan rutin. Silakan kembali beberapa saat lagi.
             </p>
-            
-            <!-- Estimated Completion Time Banner -->
-            <div id="estimated-time-container" class="mt-4 pt-4 border-t border-slate-800/80 flex items-center justify-center gap-2 text-xs text-amber-300 font-semibold hidden">
-                <svg class="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <span>Estimasi Selesai: <strong id="estimated-time-text" class="text-white font-extrabold">-</strong></span>
+
+            <div id="estimated-time-box" class="mt-3 pt-3 border-t border-slate-200 text-xs text-amber-700 font-semibold hidden flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span>Estimasi Selesai: <strong id="estimated-time-text" class="text-slate-900 font-bold">-</strong></span>
             </div>
         </div>
 
-        <!-- Call to Actions -->
-        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 w-full max-w-md">
-            <button onclick="window.location.reload()" class="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-slate-950 font-bold text-sm rounded-xl transition shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2 cursor-pointer">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                <span>Muat Ulang Halaman</span>
-            </button>
-            
-            <a id="btn-main-login" href="login.html" class="w-full sm:w-auto px-6 py-3 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 font-semibold text-sm rounded-xl transition flex items-center justify-center gap-2">
-                <span id="text-main-login">Login Pengelola</span>
-            </a>
-        </div>
+        <!-- Exactly 1 Login Panitia Button -->
+        <a href="login.html" class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm rounded-xl transition shadow-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+            <span>Login Panitia</span>
+        </a>
     </main>
 
     <!-- Footer -->
-    <footer class="w-full max-w-6xl mx-auto px-6 py-6 text-center text-xs text-slate-500 z-10 border-t border-slate-900">
-        &copy; 2026 SD INPRES LELINGLUAN. Hak Cipta Dilindungi Undang-Undang.
+    <footer class="w-full max-w-lg mx-auto py-4 text-center text-xs text-slate-400">
+        &copy; 2026 SD INPRES LELINGLUAN
     </footer>
 
-    <!-- Supabase Configuration & Maintenance Loader -->
+    <!-- Supabase Configuration & Loader Script -->
     <script src="js/config.js"></script>
     <script>
+        // Load custom message without reload loops
         document.addEventListener('DOMContentLoaded', async () => {
             try {
-                // Check if user is logged in as Admin
-                const { data: { session } } = await supabaseClient.auth.getSession();
-                if (session && session.user) {
-                    // Update admin top banner
-                    const adminTopBanner = document.getElementById('admin-top-banner');
-                    const adminBannerEmail = document.getElementById('admin-banner-email');
-                    if (adminTopBanner && adminBannerEmail) {
-                        adminBannerEmail.innerText = `Anda terdeteksi sebagai Panitia (${session.user.email}). Mode Maintenance sedang AKTIF untuk publik.`;
-                        adminTopBanner.classList.remove('hidden');
-                    }
-
-                    // Update header & main login buttons
-                    const btnHeaderLogin = document.getElementById('btn-header-login');
-                    const textHeaderLogin = document.getElementById('text-header-login');
-                    const btnMainLogin = document.getElementById('btn-main-login');
-                    const textMainLogin = document.getElementById('text-main-login');
-
-                    if (btnHeaderLogin) btnHeaderLogin.href = 'admin/dashboard.html';
-                    if (textHeaderLogin) textHeaderLogin.innerText = 'Panel Admin';
-                    if (btnMainLogin) btnMainLogin.href = 'admin/dashboard.html';
-                    if (textMainLogin) textMainLogin.innerText = 'Buka Panel Admin';
-                }
-
-                // Fetch maintenance mode settings
-                const { data, error } = await supabaseClient
+                const { data } = await supabaseClient
                     .from('app_settings')
                     .select('value')
                     .eq('key', 'maintenance_mode')
                     .maybeSingle();
 
                 if (data && data.value) {
-                    const parsed = typeof data.value === 'string' ? (data.value.startsWith('{') ? JSON.parse(data.value) : data.value) : data.value;
-                    const maintenanceInfo = parsed || {};
-                    
-                    // If maintenance has been disabled, clear cache and redirect back to index
-                    if (!maintenanceInfo.enabled) {
-                        localStorage.setItem('ppdb_maintenance_mode', JSON.stringify({ enabled: false }));
-                        window.location.href = 'index.html';
-                        return;
+                    const info = typeof data.value === 'string' ? (data.value.startsWith('{') ? JSON.parse(data.value) : data.value) : data.value;
+                    if (info.message) {
+                        document.getElementById('maintenance-message').innerText = info.message;
                     }
-
-                    // Update localStorage cache
-                    localStorage.setItem('ppdb_maintenance_mode', JSON.stringify(maintenanceInfo));
-
-                    if (maintenanceInfo.message) {
-                        document.getElementById('maintenance-message').innerText = maintenanceInfo.message;
+                    if (info.estimated_end) {
+                        document.getElementById('estimated-time-text').innerText = info.estimated_end;
+                        document.getElementById('estimated-time-box').classList.remove('hidden');
                     }
-
-                    if (maintenanceInfo.estimated_end) {
-                        const estContainer = document.getElementById('estimated-time-container');
-                        const estText = document.getElementById('estimated-time-text');
-                        estText.innerText = maintenanceInfo.estimated_end;
-                        estContainer.classList.remove('hidden');
-                    }
-                } else {
-                    // No maintenance settings found -> maintenance is OFF
-                    localStorage.setItem('ppdb_maintenance_mode', JSON.stringify({ enabled: false }));
-                    window.location.href = 'index.html';
                 }
             } catch (err) {
-                console.warn('Failed to load maintenance detail:', err);
+                console.warn('Could not load maintenance message details:', err);
             }
         });
     </script>
