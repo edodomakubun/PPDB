@@ -145,6 +145,11 @@ INSERT INTO public.app_settings (key, value)
 VALUES ('school_profile', '{"nama_sekolah": "SD INPRES LELINGLUAN", "alamat": "Jl. Contoh No. 123, Desa Lelingluan", "kepala_sekolah": "SOFERET S DOMAKUBUN, S.Pd", "logo_url": "https://via.placeholder.com/150"}')
 ON CONFLICT (key) DO NOTHING;
 
+INSERT INTO public.app_settings (key, value)
+VALUES ('maintenance_mode', '{"enabled": false, "message": "Sistem PPDB sedang dalam pemeliharaan rutin. Silakan kembali lagi beberapa saat lagi.", "estimated_end": ""}')
+ON CONFLICT (key) DO NOTHING;
+
+
 
 -- ==========================================
 -- 4. FORM FIELDS

@@ -29,8 +29,11 @@ async function logActivity(action, details) {
     }
 }
 
-// Global Admin Announcement Logic
+// Global Admin Announcement & Maintenance Check Logic
 document.addEventListener('DOMContentLoaded', async () => {
+    // 1. Check Maintenance Mode globally across all pages
+    await checkGlobalMaintenanceMode();
+
     // Only run on admin pages
     if (!window.location.pathname.includes('/admin/')) return;
 
@@ -77,8 +80,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (!session) return;
 
-        // Load and update registration status badge
+        // Load and update registration and maintenance status badges
         fetchAndUpdateSidebarBadge();
+        fetchAndUpdateSidebarMaintenanceBadge();
 
         // Set User Email and Logout Handler globally
         if (sidebarContainer) {
@@ -383,3 +387,278 @@ window.openRegistrationStatusModal = async () => {
         Swal.fire('Gagal', 'Gagal memuat status pendaftaran.', 'error');
     }
 }
+
+// --- Global Maintenance Mode System ---
+
+async function checkGlobalMaintenanceMode() {
+    try {
+        const currentPath = window.location.pathname;
+
+        const { data, error } = await supabaseClient
+            .from('app_settings')
+            .select('value')
+            .eq('key', 'maintenance_mode')
+            .single();
+
+        let isMaintenance = false;
+        let maintenanceData = null;
+
+        if (data && data.value) {
+            maintenanceData = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
+            isMaintenance = !!maintenanceData.enabled;
+        }
+
+        const isAdminPage = currentPath.includes('/admin/');
+        const isLoginPage = currentPath.includes('login.html');
+        const isMaintenancePage = currentPath.includes('maintenance.html');
+
+        // 1. If Maintenance Mode is Active
+        if (isMaintenance) {
+            // Check session
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            const isAdminLoggedIn = session && session.user;
+
+            if (isAdminPage) {
+                // Admin Page: Show prominent Warning Banner to Admin
+                renderAdminMaintenanceWarningBanner(maintenanceData);
+            } else if (!isLoginPage && !isMaintenancePage) {
+                // Public Page: If NOT admin, redirect to maintenance page
+                if (!isAdminLoggedIn) {
+                    const maintenanceUrl = currentPath.includes('/admin/') ? '../maintenance.html' : 'maintenance.html';
+                    window.location.href = maintenanceUrl;
+                } else {
+                    // Admin viewing public page: Show Admin Notice Banner
+                    renderPublicAdminMaintenanceNotice(maintenanceData);
+                }
+            }
+        }
+    } catch (err) {
+        console.warn('Maintenance check notice:', err);
+    }
+}
+
+function renderAdminMaintenanceWarningBanner(data) {
+    if (document.getElementById('admin-maint-active-banner')) return;
+
+    const bannerHTML = `
+        <div id="admin-maint-active-banner" class="bg-gradient-to-r from-amber-600 to-orange-600 text-white px-4 py-2.5 shadow-md flex items-center justify-between gap-4 text-xs font-bold w-full sticky top-0 z-50">
+            <div class="flex items-center justify-between max-w-7xl mx-auto w-full gap-4">
+                <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-white animate-ping"></span>
+                    <span>MODE MAINTENANCE AKTIF: Akses publik dialihkan ke halaman pemeliharaan. Panitia tetap memiliki akses penuh ke panel admin.</span>
+                </div>
+                <button onclick="openMaintenanceStatusModal()" class="px-3 py-1 bg-amber-950/40 hover:bg-amber-950/60 rounded-lg text-white font-bold underline cursor-pointer shrink-0 transition">
+                    Kelola Maintenance
+                </button>
+            </div>
+        </div>
+    `;
+
+    const sidebarContainer = document.getElementById('sidebar-container');
+    if (sidebarContainer && sidebarContainer.nextElementSibling) {
+        sidebarContainer.nextElementSibling.insertAdjacentHTML('afterbegin', bannerHTML);
+    } else {
+        document.body.insertAdjacentHTML('afterbegin', bannerHTML);
+    }
+}
+
+function renderPublicAdminMaintenanceNotice(data) {
+    if (document.getElementById('public-admin-maint-banner')) return;
+
+    const bannerHTML = `
+        <div id="public-admin-maint-banner" class="bg-slate-900 text-amber-400 border-b border-amber-500/40 px-4 py-2.5 shadow-lg flex items-center justify-between text-xs font-bold w-full sticky top-0 z-50">
+            <div class="flex items-center justify-between max-w-7xl mx-auto w-full gap-4">
+                <div class="flex items-center gap-2 truncate">
+                    <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono text-[10px] uppercase font-bold">Admin View</span>
+                    <span class="truncate">Mode Maintenance AKTIF untuk Umum. Anda dapat melihat halaman ini karena sedang login sebagai Admin.</span>
+                </div>
+                <a href="admin/dashboard.html" class="px-3 py-1 bg-amber-500 text-slate-950 rounded-lg font-bold hover:bg-amber-400 transition cursor-pointer shrink-0">
+                    Panel Admin
+                </a>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('afterbegin', bannerHTML);
+}
+
+async function fetchAndUpdateSidebarMaintenanceBadge() {
+    try {
+        const { data, error } = await supabaseClient
+            .from('app_settings')
+            .select('value')
+            .eq('key', 'maintenance_mode')
+            .single();
+
+        let isEnabled = false;
+        if (data && data.value) {
+            const val = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
+            isEnabled = !!val.enabled;
+        }
+
+        updateSidebarMaintenanceBadge(isEnabled);
+    } catch (err) {
+        console.warn('Error loading maintenance status for sidebar:', err);
+        updateSidebarMaintenanceBadge(false);
+    }
+}
+
+function updateSidebarMaintenanceBadge(isEnabled) {
+    const badge = document.getElementById('sidebar-maint-badge');
+    const dashBadge = document.getElementById('dashboard-maint-badge');
+
+    if (badge) {
+        if (isEnabled) {
+            badge.innerText = 'Aktif';
+            badge.className = 'ml-auto text-[10px] px-2.5 py-0.5 rounded-full font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30';
+        } else {
+            badge.innerText = 'Non-Aktif';
+            badge.className = 'ml-auto text-[10px] px-2.5 py-0.5 rounded-full font-bold bg-slate-800 text-slate-400';
+        }
+    }
+
+    if (dashBadge) {
+        if (isEnabled) {
+            dashBadge.innerText = 'AKTIF (Mode Maintenance)';
+            dashBadge.className = 'text-[10px] px-2.5 py-0.5 rounded-full font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 animate-pulse';
+        } else {
+            dashBadge.innerText = 'Non-Aktif (Sistem Normal)';
+            dashBadge.className = 'text-[10px] px-2.5 py-0.5 rounded-full font-bold bg-green-500/20 text-green-400 border border-green-500/30';
+        }
+    }
+}
+
+window.openMaintenanceStatusModal = async () => {
+    try {
+        Swal.fire({
+            title: 'Memuat status maintenance...',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        const { data, error } = await supabaseClient
+            .from('app_settings')
+            .select('value')
+            .eq('key', 'maintenance_mode')
+            .single();
+
+        let maintenanceInfo = {
+            enabled: false,
+            message: 'Sistem pendaftaran dan layanan informasi online sedang menjalani pemeliharaan rutin. Silakan kembali lagi beberapa saat lagi.',
+            estimated_end: ''
+        };
+
+        if (data && data.value) {
+            const parsed = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
+            maintenanceInfo = { ...maintenanceInfo, ...parsed };
+        }
+
+        const isEnabled = maintenanceInfo.enabled;
+
+        Swal.fire({
+            title: 'Pengaturan Mode Maintenance',
+            html: `
+                <div class="flex flex-col text-left gap-4 py-2 text-slate-700">
+                    <p class="text-xs text-slate-500">
+                        Saat Mode Maintenance diaktifkan, seluruh halaman publik akan dikunci dan pengunjung dialihkan ke halaman pemeliharaan. Panitia tetap dapat mengoperasikan panel admin.
+                    </p>
+                    
+                    <!-- Toggle Switch -->
+                    <div class="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+                        <div>
+                            <span class="text-xs font-bold text-slate-800 block">Status Mode Maintenance</span>
+                            <span id="modal-maint-status-label" class="text-[11px] font-semibold ${isEnabled ? 'text-amber-600 font-bold' : 'text-slate-500'}">
+                                ${isEnabled ? 'AKTIF (Publik Dikunci)' : 'NON-AKTIF (Sistem Normal)'}
+                            </span>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer select-none">
+                            <input type="checkbox" id="modal-toggle-maint" class="sr-only peer" ${isEnabled ? 'checked' : ''}>
+                            <div class="w-12 h-6.5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
+                        </label>
+                    </div>
+
+                    <!-- Custom Message Input -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Pesan Pemeliharaan (Untuk Pengunjung)</label>
+                        <textarea id="modal-maint-message" rows="3" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition" placeholder="Tuliskan pesan yang akan dibaca pengunjung publik...">${maintenanceInfo.message || ''}</textarea>
+                    </div>
+
+                    <!-- Estimated Completion Input -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Estimasi Waktu Selesai (Opsional)</label>
+                        <input type="text" id="modal-maint-estimated" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition" value="${maintenanceInfo.estimated_end || ''}" placeholder="Contoh: 15 Agustus 2026, Pukul 14.00 WIT">
+                    </div>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Simpan Perubahan',
+            cancelButtonText: 'Batal',
+            customClass: {
+                confirmButton: 'bg-amber-600 hover:bg-amber-700 text-white font-bold px-5 py-2.5 rounded-xl transition cursor-pointer text-xs',
+                cancelButton: 'bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-5 py-2.5 rounded-xl transition cursor-pointer text-xs'
+            },
+            didOpen: () => {
+                const toggle = document.getElementById('modal-toggle-maint');
+                const label = document.getElementById('modal-maint-status-label');
+                toggle.addEventListener('change', (e) => {
+                    const checked = e.target.checked;
+                    label.innerText = checked ? 'AKTIF (Publik Dikunci)' : 'NON-AKTIF (Sistem Normal)';
+                    label.className = checked ? 'text-[11px] font-semibold text-amber-600 font-bold' : 'text-[11px] font-semibold text-slate-500';
+                });
+            },
+            preConfirm: async () => {
+                const enabled = document.getElementById('modal-toggle-maint').checked;
+                const message = document.getElementById('modal-maint-message').value.trim();
+                const estimated_end = document.getElementById('modal-maint-estimated').value.trim();
+
+                try {
+                    const { data: { session } } = await supabaseClient.auth.getSession();
+                    const userEmail = session ? session.user.email : 'admin';
+
+                    const payload = {
+                        enabled: enabled,
+                        message: message || 'Sistem PPDB sedang dalam pemeliharaan rutin. Silakan kembali lagi beberapa saat lagi.',
+                        estimated_end: estimated_end,
+                        updated_at: new Date().toISOString(),
+                        updated_by: userEmail
+                    };
+
+                    const { error: upsertError } = await supabaseClient
+                        .from('app_settings')
+                        .upsert({ key: 'maintenance_mode', value: payload });
+
+                    if (upsertError) throw upsertError;
+
+                    await logActivity(
+                        enabled ? 'ENABLE_MAINTENANCE_MODE' : 'DISABLE_MAINTENANCE_MODE',
+                        `Mode Maintenance diubah menjadi ${enabled ? 'AKTIF' : 'NON-AKTIF'}. Pesan: "${message.substring(0, 40)}..."`
+                    );
+
+                    return payload;
+                } catch (err) {
+                    Swal.showValidationMessage(`Gagal menyimpan: ${err.message}`);
+                    return false;
+                }
+            }
+        }).then((result) => {
+            if (result.isConfirmed && result.value) {
+                const isEnabled = result.value.enabled;
+                updateSidebarMaintenanceBadge(isEnabled);
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil',
+                    text: `Mode Maintenance berhasil ${isEnabled ? 'DIAKTIFKAN' : 'DIMATIKAN'}.`,
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            }
+        });
+    } catch (err) {
+        console.error('Error in openMaintenanceStatusModal:', err);
+        Swal.fire('Gagal', 'Terjadi kesalahan saat memuat konfigurasi maintenance.', 'error');
+    }
+};
+
