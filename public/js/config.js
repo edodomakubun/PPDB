@@ -390,6 +390,32 @@ window.openRegistrationStatusModal = async () => {
 
 // --- Global Maintenance Mode System ---
 
+// Instant Synchronous Check from localStorage (Prevents Content Flash on Public Pages)
+(function instantMaintenanceCheck() {
+    try {
+        const currentPath = window.location.pathname;
+        const isAdminPage = currentPath.includes('/admin/');
+        const isLoginPage = currentPath.includes('login.html');
+        const isMaintenancePage = currentPath.includes('maintenance.html');
+
+        if (!isAdminPage && !isLoginPage && !isMaintenancePage) {
+            const cachedMaint = localStorage.getItem('ppdb_maintenance_mode');
+            if (cachedMaint) {
+                const parsed = typeof cachedMaint === 'string' ? JSON.parse(cachedMaint) : cachedMaint;
+                if (parsed && parsed.enabled) {
+                    const hasAuthToken = Object.keys(localStorage).some(k => k.includes('auth-token'));
+                    if (!hasAuthToken) {
+                        const targetUrl = currentPath.includes('/admin/') ? '../maintenance.html' : 'maintenance.html';
+                        window.location.href = targetUrl;
+                    }
+                }
+            }
+        }
+    } catch (e) {
+        console.warn('Instant maintenance check warning:', e);
+    }
+})();
+
 async function checkGlobalMaintenanceMode() {
     try {
         const currentPath = window.location.pathname;
@@ -398,14 +424,18 @@ async function checkGlobalMaintenanceMode() {
             .from('app_settings')
             .select('value')
             .eq('key', 'maintenance_mode')
-            .single();
+            .maybeSingle();
 
         let isMaintenance = false;
         let maintenanceData = null;
 
         if (data && data.value) {
-            maintenanceData = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
-            isMaintenance = !!maintenanceData.enabled;
+            maintenanceData = typeof data.value === 'string' ? (data.value.startsWith('{') ? JSON.parse(data.value) : data.value) : data.value;
+            isMaintenance = !!(maintenanceData && maintenanceData.enabled);
+            // Cache to localStorage for zero-flash load on subsequent page visits
+            localStorage.setItem('ppdb_maintenance_mode', JSON.stringify(maintenanceData));
+        } else {
+            localStorage.setItem('ppdb_maintenance_mode', JSON.stringify({ enabled: false }));
         }
 
         const isAdminPage = currentPath.includes('/admin/');
@@ -431,6 +461,10 @@ async function checkGlobalMaintenanceMode() {
                     renderPublicAdminMaintenanceNotice(maintenanceData);
                 }
             }
+        } else if (isMaintenancePage) {
+            // If maintenance is OFF and user is on maintenance.html, redirect back to index.html
+            const indexUrl = currentPath.includes('/admin/') ? '../index.html' : 'index.html';
+            window.location.href = indexUrl;
         }
     } catch (err) {
         console.warn('Maintenance check notice:', err);
@@ -488,12 +522,12 @@ async function fetchAndUpdateSidebarMaintenanceBadge() {
             .from('app_settings')
             .select('value')
             .eq('key', 'maintenance_mode')
-            .single();
+            .maybeSingle();
 
         let isEnabled = false;
         if (data && data.value) {
-            const val = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
-            isEnabled = !!val.enabled;
+            const val = typeof data.value === 'string' ? (data.value.startsWith('{') ? JSON.parse(data.value) : data.value) : data.value;
+            isEnabled = !!(val && val.enabled);
         }
 
         updateSidebarMaintenanceBadge(isEnabled);
@@ -540,7 +574,7 @@ window.openMaintenanceStatusModal = async () => {
             .from('app_settings')
             .select('value')
             .eq('key', 'maintenance_mode')
-            .single();
+            .maybeSingle();
 
         let maintenanceInfo = {
             enabled: false,
@@ -549,7 +583,7 @@ window.openMaintenanceStatusModal = async () => {
         };
 
         if (data && data.value) {
-            const parsed = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
+            const parsed = typeof data.value === 'string' ? (data.value.startsWith('{') ? JSON.parse(data.value) : data.value) : data.value;
             maintenanceInfo = { ...maintenanceInfo, ...parsed };
         }
 
@@ -629,6 +663,9 @@ window.openMaintenanceStatusModal = async () => {
 
                     if (upsertError) throw upsertError;
 
+                    // Sync to localStorage immediately
+                    localStorage.setItem('ppdb_maintenance_mode', JSON.stringify(payload));
+
                     await logActivity(
                         enabled ? 'ENABLE_MAINTENANCE_MODE' : 'DISABLE_MAINTENANCE_MODE',
                         `Mode Maintenance diubah menjadi ${enabled ? 'AKTIF' : 'NON-AKTIF'}. Pesan: "${message.substring(0, 40)}..."`
@@ -661,4 +698,5 @@ window.openMaintenanceStatusModal = async () => {
         Swal.fire('Gagal', 'Terjadi kesalahan saat memuat konfigurasi maintenance.', 'error');
     }
 };
+
 

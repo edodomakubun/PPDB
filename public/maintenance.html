@@ -8,6 +8,8 @@
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -32,6 +34,24 @@
     <div class="fixed top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-tr from-amber-600/20 to-orange-500/10 rounded-full blur-3xl pointer-events-none animate-pulse-glow"></div>
     <div class="fixed bottom-10 left-10 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
 
+    <!-- Admin Top Notice Banner (Dynamic) -->
+    <div id="admin-top-banner" class="w-full bg-slate-900 border-b border-amber-500/40 text-amber-300 px-4 py-2.5 shadow-lg text-xs font-bold z-30 hidden">
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
+            <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono text-[10px] uppercase">Admin Mode</span>
+                <span id="admin-banner-email">Anda terdeteksi sebagai Panitia (Logged In).</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="openMaintenanceStatusModal()" class="px-3 py-1 bg-amber-500 text-slate-950 rounded-lg font-bold hover:bg-amber-400 transition cursor-pointer text-xs">
+                    Matikan / Ubah Maintenance
+                </button>
+                <a href="admin/dashboard.html" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold transition text-xs border border-slate-700">
+                    Buka Panel Admin
+                </a>
+            </div>
+        </div>
+    </div>
+
     <!-- Top Header Navigation (Simplified) -->
     <header class="w-full max-w-6xl mx-auto px-6 py-6 flex items-center justify-between z-10">
         <div class="flex items-center gap-3">
@@ -44,9 +64,9 @@
             </div>
         </div>
 
-        <a href="login.html" class="px-4 py-2 bg-slate-900/80 hover:bg-slate-800 border border-slate-700/60 rounded-xl text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-2 backdrop-blur-md cursor-pointer shadow-sm">
+        <a id="btn-header-login" href="login.html" class="px-4 py-2 bg-slate-900/80 hover:bg-slate-800 border border-slate-700/60 rounded-xl text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-2 backdrop-blur-md cursor-pointer shadow-sm">
             <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
-            <span>Login Panitia</span>
+            <span id="text-header-login">Login Panitia</span>
         </a>
     </header>
 
@@ -96,8 +116,8 @@
                 <span>Muat Ulang Halaman</span>
             </button>
             
-            <a href="login.html" class="w-full sm:w-auto px-6 py-3 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 font-semibold text-sm rounded-xl transition flex items-center justify-center gap-2">
-                <span>Login Pengelola</span>
+            <a id="btn-main-login" href="login.html" class="w-full sm:w-auto px-6 py-3 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 font-semibold text-sm rounded-xl transition flex items-center justify-center gap-2">
+                <span id="text-main-login">Login Pengelola</span>
             </a>
         </div>
     </main>
@@ -112,20 +132,49 @@
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             try {
+                // Check if user is logged in as Admin
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (session && session.user) {
+                    // Update admin top banner
+                    const adminTopBanner = document.getElementById('admin-top-banner');
+                    const adminBannerEmail = document.getElementById('admin-banner-email');
+                    if (adminTopBanner && adminBannerEmail) {
+                        adminBannerEmail.innerText = `Anda terdeteksi sebagai Panitia (${session.user.email}). Mode Maintenance sedang AKTIF untuk publik.`;
+                        adminTopBanner.classList.remove('hidden');
+                    }
+
+                    // Update header & main login buttons
+                    const btnHeaderLogin = document.getElementById('btn-header-login');
+                    const textHeaderLogin = document.getElementById('text-header-login');
+                    const btnMainLogin = document.getElementById('btn-main-login');
+                    const textMainLogin = document.getElementById('text-main-login');
+
+                    if (btnHeaderLogin) btnHeaderLogin.href = 'admin/dashboard.html';
+                    if (textHeaderLogin) textHeaderLogin.innerText = 'Panel Admin';
+                    if (btnMainLogin) btnMainLogin.href = 'admin/dashboard.html';
+                    if (textMainLogin) textMainLogin.innerText = 'Buka Panel Admin';
+                }
+
+                // Fetch maintenance mode settings
                 const { data, error } = await supabaseClient
                     .from('app_settings')
                     .select('value')
                     .eq('key', 'maintenance_mode')
-                    .single();
+                    .maybeSingle();
 
                 if (data && data.value) {
-                    const maintenanceInfo = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
+                    const parsed = typeof data.value === 'string' ? (data.value.startsWith('{') ? JSON.parse(data.value) : data.value) : data.value;
+                    const maintenanceInfo = parsed || {};
                     
-                    // If maintenance has been disabled, redirect back to index
+                    // If maintenance has been disabled, clear cache and redirect back to index
                     if (!maintenanceInfo.enabled) {
+                        localStorage.setItem('ppdb_maintenance_mode', JSON.stringify({ enabled: false }));
                         window.location.href = 'index.html';
                         return;
                     }
+
+                    // Update localStorage cache
+                    localStorage.setItem('ppdb_maintenance_mode', JSON.stringify(maintenanceInfo));
 
                     if (maintenanceInfo.message) {
                         document.getElementById('maintenance-message').innerText = maintenanceInfo.message;
@@ -137,6 +186,10 @@
                         estText.innerText = maintenanceInfo.estimated_end;
                         estContainer.classList.remove('hidden');
                     }
+                } else {
+                    // No maintenance settings found -> maintenance is OFF
+                    localStorage.setItem('ppdb_maintenance_mode', JSON.stringify({ enabled: false }));
+                    window.location.href = 'index.html';
                 }
             } catch (err) {
                 console.warn('Failed to load maintenance detail:', err);
