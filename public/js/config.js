@@ -398,7 +398,7 @@ async function checkGlobalMaintenanceMode() {
         const isLoginPage = currentPath.includes('login.html');
         const isMaintenancePage = currentPath.includes('maintenance.html');
 
-        // Never redirect if already on maintenance page, login page, or admin panel
+        // Admin pages, login page, and maintenance page are never blocked by overlay
         if (isMaintenancePage || isLoginPage || isAdminPage) {
             if (isAdminPage) {
                 const { data } = await supabaseClient
@@ -417,7 +417,7 @@ async function checkGlobalMaintenanceMode() {
             return;
         }
 
-        // Public page check
+        // Fetch maintenance mode directly from Supabase
         const { data, error } = await supabaseClient
             .from('app_settings')
             .select('value')
@@ -437,7 +437,8 @@ async function checkGlobalMaintenanceMode() {
             const isAdminLoggedIn = session && session.user;
 
             if (!isAdminLoggedIn) {
-                window.location.href = 'maintenance.html';
+                // Render In-Page Overlay (No URL redirect, NO reload loop, 100% stable!)
+                renderInPageMaintenanceScreen(maintenanceData);
             } else {
                 renderPublicAdminMaintenanceNotice(maintenanceData);
             }
@@ -445,6 +446,67 @@ async function checkGlobalMaintenanceMode() {
     } catch (err) {
         console.warn('Maintenance check notice:', err);
     }
+}
+
+function renderInPageMaintenanceScreen(data) {
+    if (document.getElementById('full-maintenance-overlay')) return;
+
+    const message = (data && data.message) ? data.message : 'Sistem pendaftaran dan layanan informasi online saat ini sedang dalam pemeliharaan rutin. Silakan kembali beberapa saat lagi.';
+
+    const maintenanceOverlayHTML = `
+        <div id="full-maintenance-overlay" class="fixed inset-0 z-[999999] bg-slate-100 text-slate-800 flex flex-col justify-between items-center p-4 sm:p-6 overflow-y-auto font-sans">
+            <!-- Top Header / Logo -->
+            <header class="w-full max-w-lg mx-auto py-6 flex items-center justify-center gap-3 shrink-0">
+                <div class="w-10 h-10 bg-slate-800 text-white rounded-xl flex items-center justify-center font-extrabold text-sm shadow">
+                    SD
+                </div>
+                <div>
+                    <h1 class="font-bold text-base text-slate-900 leading-tight">SD INPRES LELINGLUAN</h1>
+                    <p class="text-xs text-slate-500 font-medium">Sistem Informasi Penerimaan Siswa Baru</p>
+                </div>
+            </header>
+
+            <!-- Main Card Container -->
+            <main class="w-full max-w-lg bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm my-auto text-center shrink-0">
+                <!-- Icon & Status Badge -->
+                <div class="mx-auto w-16 h-16 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mb-5 border border-amber-200">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                </div>
+
+                <span class="inline-block px-3 py-1 bg-amber-100 text-amber-800 text-[11px] font-extrabold uppercase rounded-full tracking-wider mb-3">
+                    Pemeliharaan Sistem
+                </span>
+
+                <h2 class="text-xl sm:text-2xl font-bold text-slate-900 mb-3">
+                    Sistem Sedang Dalam Pemeliharaan
+                </h2>
+
+                <!-- Maintenance Message -->
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6 text-slate-600 text-xs sm:text-sm leading-relaxed text-left">
+                    <p class="whitespace-pre-line font-medium text-slate-700">
+                        ${message}
+                    </p>
+                </div>
+
+                <!-- Exactly 1 Login Panitia Button -->
+                <a href="login.html" class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm rounded-xl transition shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+                    <span>Login Panitia</span>
+                </a>
+            </main>
+
+            <!-- Footer -->
+            <footer class="w-full max-w-lg mx-auto py-4 text-center text-xs text-slate-400 shrink-0">
+                &copy; 2026 SD INPRES LELINGLUAN
+            </footer>
+        </div>
+    `;
+
+    document.body.style.overflow = 'hidden';
+    document.body.insertAdjacentHTML('afterbegin', maintenanceOverlayHTML);
 }
 
 function renderAdminMaintenanceWarningBanner(data) {
